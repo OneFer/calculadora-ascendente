@@ -1,167 +1,239 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora Ascendente & Ancestral</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Calculadora Ascendente / Ancestral (corrigida)</title>
 <style>
-:root {
-  --bg: #121212;
-  --text: #fff;
-  --card-bg: #1e1e1e;
-  --accent: #4cafef;
-}
-body {
-  font-family: Arial, sans-serif;
-  background-color: var(--bg);
-  color: var(--text);
-  margin: 0;
-  padding: 0;
-}
-header {
-  padding: 1rem;
-  text-align: center;
-  background: var(--card-bg);
-}
-.container {
-  max-width: 900px;
-  margin: auto;
-  padding: 1rem;
-}
-.card {
-  background: var(--card-bg);
-  padding: 1rem;
-  margin: 1rem 0;
-  border-radius: 8px;
-}
-label {
-  display: block;
-  margin-top: 0.5rem;
-}
-input, select {
-  width: 100%;
-  padding: 0.4rem;
-  margin-top: 0.3rem;
-  border-radius: 5px;
-  border: none;
-}
-button {
-  margin-top: 1rem;
-  padding: 0.6rem;
-  border: none;
-  background: var(--accent);
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.result {
-  white-space: pre-wrap;
-  font-family: monospace;
-}
-.theme-selector {
-  margin-top: 0.5rem;
-}
+  :root{
+    --bg:#0f1115; --card:#17181b; --muted:#9aa0a6; --accent:#8b5cf6; --glass: rgba(255,255,255,0.03);
+    --success:#22c55e;
+  }
+  [data-theme="light"]{ --bg:#f7fafc; --card:#ffffff; --muted:#374151; --accent:#4f46e5; --glass: rgba(0,0,0,0.04); --success:#16a34a }
+  [data-theme="blue"]{ --bg:#071029; --card:#0e1a2b; --muted:#9fb6d8; --accent:#2dd4bf; --glass: rgba(255,255,255,0.02); --success:#2dd4bf }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,Arial;color:var(--muted);background:var(--bg);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .app{width:100%;max-width:920px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(2,6,23,0.6);}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  h1{margin:0;color:var(--accent);font-size:18px}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{background:var(--card);padding:12px;border-radius:10px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input[type=number],select,input[type=range]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted)}
+  .rangeRow{display:flex;gap:8px;align-items:center}
+  .rangeRow span{min-width:48px;text-align:right;color:var(--muted)}
+  button{width:100%;padding:10px;border-radius:8px;border:none;background:var(--accent);color:white;font-weight:600;cursor:pointer}
+  .result{margin-top:14px;padding:12px;border-radius:10px;background:linear-gradient(180deg,var(--glass),transparent);color:var(--muted)}
+  .result h3{margin:0 0 8px 0;color:var(--accent)}
+  .line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.02)}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+  .pill{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;color:var(--muted);font-weight:600}
+  @media(max-width:720px){.controls{grid-template-columns:1fr}.headerRight{display:none}}
 </style>
 </head>
-<body>
-<header>
-  <h1>Calculadora de Recursos</h1>
-  <div>
-    <label for="theme">Tema:</label>
-    <select id="theme" class="theme-selector">
-      <option value="dark">Escuro</option>
-      <option value="light">Claro</option>
-      <option value="blue">Azul</option>
-    </select>
+<body data-theme="dark">
+  <div class="app">
+    <header>
+      <h1>Calculadora Ascendente / Ancestral — CORRIGIDA</h1>
+      <div class="headerRight">
+        <label for="theme" class="muted small">Tema</label>
+        <select id="theme" class="pill" style="margin-left:8px">
+          <option value="dark">Escuro</option>
+          <option value="light">Claro</option>
+          <option value="blue">Azul</option>
+        </select>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="card">
+        <label for="tipo">O que você quer calcular</label>
+        <select id="tipo">
+          <option value="ascendente">Ascendente (blocos purificados)</option>
+          <option value="ancestral">Ancestral (ingots)</option>
+        </select>
+
+        <label for="quantidade">Quantidade desejada</label>
+        <input id="quantidade" type="number" min="1" value="1280">
+
+        <label for="chance">Chance de sucesso na conversão (ex: 75)</label>
+        <div class="rangeRow"><input id="chance" type="range" min="50" max="100" value="75"><span id="chanceLabel">75%</span></div>
+
+        <label class="small muted">OBS: 1 Ancestral Block = 9 Ancestral ingots. Para purificar (Ascendente) cada bloco usa 24 platings de Soul Stained Steel. Para produzir as platings, receita: 2 platings = 1 ingot + 4 nuggets (1 ingot = 9 nuggets).</label>
+
+        <div style="margin-top:10px"><button onclick="calcular()">Calcular</button></div>
+      </div>
+
+      <div class="card">
+        <h4 style="margin:0 0 8px 0">Resumo rápido</h4>
+        <div class="muted small">Escolha o tipo + quantidade e clique em <strong>Calcular</strong>. A saída mostra: total de ingots (considerando chance), espíritos, platings necessários e cálculo correto de Soul Stained Steel (ingots + nuggets).</div>
+
+        <hr style="border:none;height:8px;background:transparent" />
+
+        <div style="margin-top:8px">
+          <div class="muted small">Por que corrigimos?</div>
+          <div class="small">Antes a calculadora só dividia platings por 2 e ignorava os nuggets necessários. Agora ela calcula: <em>pares</em> de platings, nuggets exigidos, quantos ingots precisam ser partidos em nuggets e o total mínimo de ingots.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultado" class="result" style="display:none"></div>
   </div>
-</header>
-
-<div class="container">
-  <div class="card">
-    <label for="tipo">Tipo de cálculo:</label>
-    <select id="tipo">
-      <option value="ascendente">Ascendente</option>
-      <option value="ancestral">Ancestral</option>
-    </select>
-
-    <label for="quantidade">Quantidade desejada:</label>
-    <input type="number" id="quantidade" value="1280">
-
-    <label for="chance">Chance de sucesso (em %):</label>
-    <input type="range" id="chance" min="50" max="100" value="75">
-    <span id="chanceValor">75%</span>
-
-    <label for="tempoOpcional">Calcular tempo? (semanas):</label>
-    <input type="number" id="tempoOpcional" placeholder="Deixe vazio para ignorar">
-
-    <button onclick="calcular()">Calcular</button>
-  </div>
-
-  <div class="card result" id="resultado"></div>
-</div>
 
 <script>
-const themes = {
-  dark: { "--bg": "#121212", "--text": "#fff", "--card-bg": "#1e1e1e", "--accent": "#4cafef" },
-  light: { "--bg": "#f5f5f5", "--text": "#000", "--card-bg": "#fff", "--accent": "#007bff" },
-  blue: { "--bg": "#0d1b2a", "--text": "#e0e1dd", "--card-bg": "#1b263b", "--accent": "#415a77" }
-};
+  const theme = document.getElementById('theme');
+  theme.addEventListener('change', ()=>{document.body.setAttribute('data-theme', theme.value)});
+  const range = document.getElementById('chance');
+  const label = document.getElementById('chanceLabel');
+  range.addEventListener('input', ()=> label.textContent = range.value + '%');
 
-document.getElementById("theme").addEventListener("change", e => {
-  const theme = themes[e.target.value];
-  for (let prop in theme) {
-    document.documentElement.style.setProperty(prop, theme[prop]);
+  function format(n){ return (Math.round(n*100)/100).toLocaleString(); }
+
+  function calcular(){
+    const tipo = document.getElementById('tipo').value;
+    const qtd = Math.max(1, parseInt(document.getElementById('quantidade').value));
+    const chance = Math.max(0.01, parseFloat(document.getElementById('chance').value)/100);
+
+    // Result container
+    const out = document.getElementById('resultado');
+    out.style.display = 'block';
+    out.innerHTML = '';
+
+    // compute base ingots needed to produce the required Ancestral ingots
+    // If user asked for 'ancestral' we treat qtd as number of ancestral ingots required (não blocks)
+    // If user asked for 'ascendente' we treat qtd as number of ascendent blocks; each block needs 9 ancestral ingots
+
+    let ancestral_ingots_needed = 0; // final ancestral ingots required (before chance)
+    if(tipo === 'ancestral') {
+      ancestral_ingots_needed = qtd; // user asked for ingots directly
+    } else {
+      ancestral_ingots_needed = qtd * 9; // blocks -> ingots
+    }
+
+    // Considering chance: number of conversion attempts (= arcane ingots consumed)
+    const attempts = Math.ceil(ancestral_ingots_needed / chance);
+
+    // Spirits used in step 1 (cada tentativa usa 8 arcane, 8 infernal, 8 earthen)
+    const arcaneSpirit_step1 = attempts * 8;
+    const infernalSpirit_step1 = attempts * 8;
+    const earthenSpirit_step1 = attempts * 8;
+
+    // Now purification step (only for ascendente) — per block (not per ingot)
+    // Purification per block (user spec): 24 eldritch, 24 arcane, 16 sagrado, 16 earthen, 16 infernal
+    let blocks_count = (tipo==='ascendente') ? qtd : Math.ceil(ancestral_ingots_needed/9);
+
+    const eldritch_purify = blocks_count * 24;
+    const arcane_purify = blocks_count * 24;
+    const sagrado_purify = blocks_count * 16;
+    const earthen_purify = blocks_count * 16;
+    const infernal_purify = blocks_count * 16;
+    const voidsalt_purify = blocks_count * 16;
+    const nullvoid_purify = blocks_count * 16;
+
+    // Soul Stained Steel platings required (per block 24)
+    const platings_required = blocks_count * 24;
+
+    // ---------------------------------------------------
+    // CORRETO: calcular quantos Soul Stained Steel ingots e nuggets precisamos
+    // Receita informada: 2 platings = 1 ingot + 4 nuggets
+    // 1 ingot pode ser quebrado em 9 nuggets
+    // Estratégia: tratar platings em pares + possível resto, garantir ingots inteiros para as fatias inteiras
+    // ---------------------------------------------------
+
+    const P = platings_required;
+    const pairs = Math.floor(P / 2);        // número de pares completos
+    const remainder = P % 2;               // 0 ou 1
+
+    // Para cada par:
+    // - consome 1 ingot (inteiro)
+    // - consome 4 nuggets
+    // Para resto (1 plating): consome 0.5 ingot + 2 nuggets -> na prática precisa de 1 ingot inteiro (não dá pra meio ingot),
+    // então consideramos que há 1 whole ingot reservado para o remainder.
+
+    const ingots_whole_for_pairs = pairs;              // ingots usados inteiros para os pares
+    const ingots_whole_for_remainder = remainder ? 1 : 0; // se tiver resto, precisamos de 1 ingot inteiro pra cobrir a metade
+    const ingots_whole_needed = ingots_whole_for_pairs + ingots_whole_for_remainder;
+
+    const nuggets_needed = (pairs * 4) + (remainder ? 2 : 0);
+
+    // quantos ingots precisam ser quebrados para gerar os nuggets
+    const ingots_broken_for_nuggets = Math.ceil(nuggets_needed / 9);
+
+    // total de ingots de Soul Stained Steel que precisamos fabricar (inteiros)
+    const total_soul_ingots_needed = ingots_whole_needed + ingots_broken_for_nuggets;
+
+    // depois de quebrar ingots_broken_for_nuggets, quantos nuggets sobraram (ex: ganhamos 9*broken - needed)
+    const nuggets_produced = ingots_broken_for_nuggets * 9;
+    const nuggets_leftover = nuggets_produced - nuggets_needed;
+
+    // Ingredients to craft each Soul Stained Steel ingot (user provided):
+    // 4 Processed Soulstone, 3 Wicked Spirit, 1 Arcane Spirit, 1 Earthen Spirit
+
+    const processedSoulstone_total = total_soul_ingots_needed * 4;
+    const wickedSpirit_total = total_soul_ingots_needed * 3;
+    const arcaneSpirit_for_soul_ingots = total_soul_ingots_needed * 1;
+    const earthenSpirit_for_soul_ingots = total_soul_ingots_needed * 1;
+
+    // Sum spirits totals (step1 + purificação + crafting soul ingots inputs)
+    const total_arcane_spirit = arcaneSpirit_step1 + arcane_purify + arcaneSpirit_for_soul_ingots;
+    const total_infernal_spirit = infernalSpirit_step1 + infernal_purify;
+    const total_earthen_spirit = earthenSpirit_step1 + earthen_purify + earthenSpirit_for_soul_ingots;
+
+    // Final NullSlate and Blaze counted earlier
+    const total_void_salt = voidsalt_purify;
+    const total_null_void = nullvoid_purify;
+    const total_blaze = blocks_count * 24;
+    const total_null_slate = blocks_count * 16;
+
+    // Arcane ingots attempts (base)
+    const arcane_ingots_used = attempts;
+
+    // Build output
+    let html = '<h3>Recursos necessários</h3>';
+    html += `<div class="line"><div>Ingots Ancestrais desejados (brutos):</div><div class="muted">${ancestral_ingots_needed.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Tentativas / Arcane ingots consumidos (com chance ${Math.round(chance*100)}%):</div><div class="muted">${arcane_ingots_used.toLocaleString()}</div></div>`;
+
+    // Spirits (step1)
+    html += `<h4 style="color:var(--accent);margin-top:8px">Espíritos (totais)</h4>`;
+    html += `<div class="line"><div>Arcane Spirit (total):</div><div class="muted">${total_arcane_spirit.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Infernal Spirit (total):</div><div class="muted">${total_infernal_spirit.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Earthen Spirit (total):</div><div class="muted">${total_earthen_spirit.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Eldritch Spirit (purificação):</div><div class="muted">${eldritch_purify.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Sagrado Spirit (purificação):</div><div class="muted">${sagrado_purify.toLocaleString()}</div></div>`;
+
+    // Platinas / Soul Stained Steel
+    html += `<h4 style="color:var(--accent);margin-top:8px">Soul Stained Steel / Platings</h4>`;
+    html += `<div class="line"><div>Platings necessários:</div><div class="muted">${P.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>--- pares completos (2 platings):</div><div class="muted">${pairs.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>--- resto (1 plating se houver):</div><div class="muted">${remainder}</div></div>`;
+
+    html += `<div class="line" style="border-top:1px solid rgba(255,255,255,0.03);margin-top:6px"><div>Ingots inteiros necessários para platings (usados inteiros):</div><div class="muted">${ingots_whole_needed.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Nuggets necessários:</div><div class="muted">${nuggets_needed.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Ingots a serem quebrados para nuggets:</div><div class="muted">${ingots_broken_for_nuggets.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Total de Soul Stained Steel ingots a produzir (inteiros):</div><div class="muted">${total_soul_ingots_needed.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Nuggets produzidos (a partir dos ingots quebrados):</div><div class="muted">${nuggets_produced.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Nuggets sobrando após uso:</div><div class="muted">${nuggets_leftover.toLocaleString()}</div></div>`;
+
+    // Ingredients to craft Soul Stained Steel ingots
+    html += `<h4 style="color:var(--accent);margin-top:8px">Ingredientes para produzir ${total_soul_ingots_needed.toLocaleString()} Soul Stained Steel ingots</h4>`;
+    html += `<div class="line"><div>Processed Soulstone:</div><div class="muted">${processedSoulstone_total.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Wicked Spirit:</div><div class="muted">${wickedSpirit_total.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Arcane Spirit (pra soul ingots):</div><div class="muted">${arcaneSpirit_for_soul_ingots.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Earthen Spirit (pra soul ingots):</div><div class="muted">${earthenSpirit_for_soul_ingots.toLocaleString()}</div></div>`;
+
+    // Other resources
+    html += `<h4 style="color:var(--accent);margin-top:8px">Outros recursos</h4>`;
+    html += `<div class="line"><div>Void Salt (purificação):</div><div class="muted">${total_void_salt.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Null Void (purificação):</div><div class="muted">${total_null_void.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Blaze Powder (final):</div><div class="muted">${total_blaze.toLocaleString()}</div></div>`;
+    html += `<div class="line"><div>Null Slate (final):</div><div class="muted">${total_null_slate.toLocaleString()}</div></div>`;
+
+    // inspiration: show base attempts
+    html += `<div style="margin-top:10px;font-size:13px;color:var(--muted)">Observação: as contagens de "Arcane Ingots / tentativas" referem-se ao número de tentativas de conversão necessárias para gerar os Ancestral ingots (considerando a chance informada). A produção de Soul Stained Steel foi calculada garantindo ingots inteiros quando a receita pede "1 ingot" e cobrindo os nuggets necessários quebrando ingots extras quando preciso.</div>`;
+
+    out.innerHTML = html;
   }
-});
-
-document.getElementById("chance").addEventListener("input", e => {
-  document.getElementById("chanceValor").textContent = e.target.value + "%";
-});
-
-function calcular() {
-  const tipo = document.getElementById("tipo").value;
-  const qtd = parseInt(document.getElementById("quantidade").value);
-  const chance = parseInt(document.getElementById("chance").value) / 100;
-  const semanas = parseInt(document.getElementById("tempoOpcional").value) || null;
-  
-  let resultado = "";
-
-  if (tipo === "ancestral") {
-    const ingots = Math.ceil(qtd * 9 / chance);
-    const espiritos = ingots * 8;
-    resultado += `🔹 Para ${qtd} blocos Ancestral:\n`;
-    resultado += `- ${ingots} Arcane Ingots\n`;
-    resultado += `- ${espiritos} Infernal Spirits\n`;
-    resultado += `- ${espiritos} Earthen Spirits\n`;
-    resultado += `- ${espiritos} Arcane Spirits\n`;
-  } 
-  else if (tipo === "ascendente") {
-    const ingots = Math.ceil(qtd * 9 / chance);
-    const espiritos = ingots * 8;
-    const blocos = qtd;
-    resultado += `🔹 Para ${qtd} blocos Ascendente:\n`;
-    resultado += `- ${ingots} Arcane Ingots\n`;
-    resultado += `- ${espiritos} Infernal Spirits\n`;
-    resultado += `- ${espiritos} Earthen Spirits\n`;
-    resultado += `- ${espiritos} Arcane Spirits\n`;
-    resultado += `- ${blocos*24} Eldritch Spirits\n`;
-    resultado += `- ${blocos*24} Arcane Spirits (purificação)\n`;
-    resultado += `- ${blocos*16} Sagrado Spirits\n`;
-    resultado += `- ${blocos*24} Soul Stained Steel Plating\n`;
-    resultado += `- ${blocos*16} Void Salts\n`;
-    resultado += `- ${blocos*16} Null Void\n`;
-    resultado += `- ${blocos*24} Blaze Powder\n`;
-    resultado += `- ${blocos*16} Null Slate\n`;
-  }
-
-  if (semanas) {
-    const dias = semanas * 7;
-    const horas = dias * 5; // assumindo 5h por dia
-    resultado += `\n⏳ Meta: ${semanas} semanas (${dias} dias, ${horas} horas de jogo)\n`;
-  }
-
-  document.getElementById("resultado").textContent = resultado;
-}
 </script>
 </body>
 </html>
