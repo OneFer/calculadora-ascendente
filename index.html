@@ -1,473 +1,599 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tenebris Fabricator - Reversion & Data Fix</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #d4d4d8; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #09090b; }
-        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-        input[type="range"] { accent-color: #8b5cf6; }
-        select optgroup { background: #18181b; color: #a1a1aa; font-style: normal; font-weight: 800; text-transform: uppercase; font-size: 10px; }
-        .lineage-tag { font-size: 8px; padding: 1px 4px; border-radius: 4px; background: rgba(139, 92, 246, 0.1); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2); white-space: nowrap; }
-        .card-base { transition: all 0.2s ease; border: 1px solid #27272a; }
-        .card-base:hover { border-color: #3f3f46; background-color: #111113; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Tenebris - V4</title>
+  
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Ícones (Lucide) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Reset e Definições Globais Tenebris */
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background-color: #0c0a09; /* Stone 950 */
+      color: #e7e5e4; 
+      -webkit-font-smoothing: antialiased;
+      background-image: radial-gradient(circle at 50% 0%, #29103a 0%, #0c0a09 40%);
+    }
+
+    .font-mono { 
+      font-family: 'JetBrains Mono', monospace; 
+    }
+
+    /* Esconder setas do input number */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    /* Scrollbar customizada */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1c1917; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #44403c; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a855f7; }
+    
+    /* Sliders Range CSS */
+    input[type=range] {
+      -webkit-appearance: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #a855f7;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+    }
+
+    /* Estilos Customizados para a Árvore (Folders) */
+    details > summary {
+      list-style: none;
+    }
+    details > summary::-webkit-details-marker {
+      display: none;
+    }
+    details[open] > summary .chevron-icon {
+      transform: rotate(90deg);
+    }
+    .tree-line {
+      position: absolute;
+      left: 23px;
+      top: 40px;
+      bottom: 0;
+      width: 2px;
+      background: #292524; /* stone-800 */
+      border-radius: 2px;
+    }
+  </style>
 </head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useMemo } = React;
+<body class="min-h-screen p-4 md:p-8 flex justify-center items-start">
 
-        // Ícones com tamanho físico travado em 14px via código e CSS para evitar estiramento
-        const Icon = ({ name, className = "" }) => {
-            const icons = {
-                Settings2: <path d="M20 7h-9m-4 0H4m16 5h-4m-4 0H4m16 5h-7m-4 0H4m12-10V5m0 4V5m-9 4V5m9 10v-2m-9 10v-2" />,
-                Database: <path d="M3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2zm0 7h18m-18 5h18" />,
-                Layers: <React.Fragment><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.1 6.1a2 2 0 0 0 0 3.8l9.07 3.91a2 2 0 0 0 1.66 0l9.07-3.91a2 2 0 0 0 0-3.8Z"/><path d="m2.1 14.74 8.94 3.86a2 2 0 0 0 1.92 0l8.94-3.86"/><path d="m2.1 10.32 8.94 3.86a2 2 0 0 0 1.92 0l8.94-3.86"/></React.Fragment>,
-                Calculator: <React.Fragment><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/></React.Fragment>,
-                RefreshCcw: <React.Fragment><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></React.Fragment>,
-                Check: <path d="m20 6-11 11-5-5" />,
-                Copy: <React.Fragment><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></React.Fragment>,
-                Plus: <React.Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></React.Fragment>,
-                Search: <React.Fragment><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></React.Fragment>
-            };
-            return (
-                <svg 
-                    width="14" height="14" 
-                    viewBox="0 0 24 24" 
-                    fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" 
-                    className={"inline-block shrink-0 " + className}
-                    style={{ width: '14px', height: '14px', minWidth: '14px', minHeight: '14px' }}
-                >
-                    {icons[name] || null}
-                </svg>
-            );
-        };
+  <!-- Container Principal -->
+  <div class="w-full max-w-5xl space-y-8">
+    
+    <!-- Cabeçalho -->
+    <header class="bg-stone-900/40 border border-stone-800 p-6 rounded-[2rem] shadow-2xl backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div>
+        <div class="flex items-center gap-3 mb-1">
+          <i data-lucide="cpu" class="text-purple-500 w-6 h-6"></i>
+          <h1 class="text-2xl font-black tracking-tighter text-white uppercase">Tenebris <span class="text-purple-500">Logistics</span></h1>
+        </div>
+        <p class="text-sm font-semibold tracking-widest text-stone-400 uppercase">Módulo de Processamento (V4 - Árvore de Pastas)</p>
+      </div>
+      
+      <!-- Status do Sistema -->
+      <div class="flex items-center gap-2 bg-stone-950 px-4 py-2 rounded-full border border-stone-800">
+        <span class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mt-0.5">
+          Matriz Ativa
+        </span>
+        <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></div>
+      </div>
+    </header>
 
-        const RECIPES = {
-            // --- FLUIDS (SIMPLIFIED AS REQUESTED) ---
-            'harmonic_essence': { name: 'Harmonic Essence', yield: 1000, inputs: [{ id: 'pure_vitae', qty: 500 }, { id: 'cursed_vitae', qty: 500 }, { id: 'thermal_monitor_durability', qty: 1 }] },
-            'pure_vitae': { name: 'Pure Vitae', yield: 1000, inputs: [{ id: 'powdered_arcane', qty: 8 }, { id: 'runic_sap', qty: 1 }] },
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Painel de Controles -->
+      <aside class="space-y-6">
+        <div class="bg-stone-900/40 border border-stone-800 p-6 rounded-[2rem] shadow-2xl backdrop-blur-xl hover:border-purple-500/40 transition-all duration-500">
+          <h2 class="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-6 flex items-center gap-2">
+            <i data-lucide="settings-2" class="w-4 h-4"></i> Parâmetros
+          </h2>
 
-            // --- ARCANE ---
-            'arcane_ingot': { name: 'Arcane Ingot', tier: 'Arcane', inputs: [{ id: 'arcane_essence', qty: 500 }, { id: 'iron_ingot', qty: 1 }, { id: 'thermal_monitor_durability', qty: 1 }] },
-            'arcane_block': { name: 'Arcane Block', tier: 'Arcane', inputs: [{ id: 'arcane_ingot', qty: 9 }] },
-            'arcane_nugget': { name: 'Arcane Nugget', yield: 9, inputs: [{ id: 'arcane_ingot', qty: 1 }] },
-            'arcane_rune': { name: 'Arcane Rune', inputs: [{ id: 'arcane_nugget', qty: 6 }, { id: 'tainted_rock_tablet', qty: 1 }] },
-            'arcane_sheet': { name: 'Arcane Sheet', inputs: [{ id: 'powdered_arcane', qty: 1 }, { id: 'lava', qty: 500 }] },
-            'arcane_plank': { name: 'Arcane Plank', yield: 4, inputs: [{ id: 'arcane_log', qty: 1 }] },
-            'powdered_arcane': { name: 'Powdered Arcane', yield: 2, useArcaneReturn: true, inputs: [{ id: 'arcane_ingot', qty: 1 }] },
-            'tainted_rock_tablet': { name: 'Tainted Rock Tablet', yield: 2, inputs: [{ id: 'aerial_spirit', qty: 8 }, { id: 'aqueous_spirit', qty: 8 }, { id: 'earthen_spirit', qty: 8 }, { id: 'infernal_spirit', qty: 8 }, { id: 'eldritch_spirit', qty: 2 }, { id: 'processed_soulstone', qty: 8 }] },
-            
-            // --- ANCESTRAL ---
-            'ancestral_ingot': { name: 'Ancestral Ingot', tier: 'Ancestral', inputs: [{ id: 'arcane_ingot', qty: 1 }, { id: 'lava', qty: 2000 }, { id: 'infernal_spirit', qty: 4 }, { id: 'arcane_spirit', qty: 4 }, { id: 'earthen_spirit', qty: 4 }] },
-            'ancestral_block': { name: 'Ancestral Block', tier: 'Ancestral', inputs: [{ id: 'ancestral_ingot', qty: 9 }] },
-            'ancestral_nugget': { name: 'Ancestral Nugget', yield: 9, inputs: [{ id: 'ancestral_ingot', qty: 1 }] },
-            'ancestral_rune': { name: 'Ancestral Rune', inputs: [{ id: 'ancestral_nugget', qty: 6 }, { id: 'tainted_rock_tablet', qty: 1 }] },
-            'ancestral_sheet': { name: 'Ancestral Sheet', inputs: [{ id: 'powdered_ancestral', qty: 1 }, { id: 'lava', qty: 500 }] },
-            'powdered_ancestral': { name: 'Powdered Ancestral', yield: 2, useArcaneReturn: true, inputs: [{ id: 'ancestral_ingot', qty: 1 }] },
+          <!-- Seleção de Item -->
+          <div class="mb-5">
+            <label class="block text-xs font-semibold text-stone-400 mb-2 uppercase tracking-wider">Item Alvo</label>
+            <select id="targetItem" class="w-full bg-stone-950 border border-stone-700 rounded-xl p-3 text-white font-mono text-sm focus:outline-none focus:border-purple-500 transition-colors">
+              <optgroup label="Nível: Arcane">
+                <option value="tenebris:arcane_upgrade_smithing_template">Arcane Smithing Template</option>
+                <option value="tenebris:arcane_sheet">Arcane Sheet</option>
+                <option value="tenebris:arcane_ingot">Arcane Ingot</option>
+                <option value="tenebris:arcane_block">Arcane Block</option>
+                <option value="tenebris:arcane_rune">Arcane Rune</option>
+              </optgroup>
+              <optgroup label="Nível: Ancestral">
+                <option value="tenebris:ancestral_upgrade_smithing_template">Ancestral Smithing Template</option>
+                <option value="tenebris:ancestral_sheet">Ancestral Sheet</option>
+                <option value="tenebris:ancestral_ingot">Ancestral Ingot</option>
+                <option value="tenebris:ancestral_block">Ancestral Block</option>
+                <option value="tenebris:ancestral_rune">Ancestral Rune</option>
+              </optgroup>
+              <optgroup label="Nível: Ascendant">
+                <option value="tenebris:ascendant_upgrade_smithing_template">Ascendant Smithing Template</option>
+                <option value="tenebris:ascendant_sheet">Ascendant Sheet</option>
+                <option value="tenebris:ascendant_paper">Ascendant Paper</option>
+                <option value="tenebris:ascendant_ingot">Ascendant Ingot</option>
+                <option value="tenebris:ascendant_block">Ascendant Block</option>
+                <option value="tenebris:ascendant_rune">Ascendant Rune</option>
+              </optgroup>
+              <optgroup label="Nível: Harmonic & Golden">
+                <option value="tenebris:harmonic_ingot_sheet">Harmonic Ingot Sheet</option>
+                <option value="tenebris:harmonic_ingot">Harmonic Ingot</option>
+                <option value="tenebris:golden_ascendance_sheet">Golden Ascendance Sheet</option>
+              </optgroup>
+            </select>
+          </div>
 
-            // --- ASCENDANT ---
-            'ascendant_ingot': { name: 'Ascendant Ingot', tier: 'Ascendant', yield: 9, inputs: [{ id: 'ascendant_block', qty: 1 }] },
-            'ascendant_block': { name: 'Ascendant Block', tier: 'Ascendant', inputs: [{ id: 'ancestral_block', qty: 1 }, { id: 'soul_stained_steel_plating', qty: 24 }, { id: 'eldritch_spirit', qty: 24 }, { id: 'arcane_spirit', qty: 24 }, { id: 'sagrado_spirit', qty: 16 }, { id: 'earthen_spirit', qty: 16 }, { id: 'infernal_spirit', qty: 16 }, { id: 'void_salt', qty: 16 }, { id: 'null_void', qty: 16 }, { id: 'blaze_powder', qty: 24 }, { id: 'null_slate', qty: 16 }] },
-            'ascendant_nugget': { name: 'Ascendant Nugget', yield: 9, inputs: [{ id: 'ascendant_ingot', qty: 1 }] },
-            'ascendant_rune': { name: 'Ascendant Rune', inputs: [{ id: 'ascendant_nugget', qty: 6 }, { id: 'void_tablet', qty: 1 }] },
-            'ascendant_sheet': { name: 'Ascendant Sheet', inputs: [{ id: 'powdered_ascendant', qty: 1 }, { id: 'lava', qty: 500 }] },
-            'powdered_ascendant': { name: 'Powdered Arcane (Asc)', yield: 2, chance: 0.25, inputs: [{ id: 'ascendant_ingot', qty: 1 }] },
-            'void_tablet': { name: 'Void Tablet', inputs: [{ id: 'eldritch_spirit', qty: 4 }, { id: 'null_slate', qty: 8 }, { id: 'void_salt', qty: 8 }, { id: 'tainted_rock_tablet', qty: 1 }] },
-            
-            // --- ESOTERIC ---
-            'esoteric_ingot': { name: 'Esoteric Ingot', tier: 'Esoteric', inputs: [{ id: 'heated_esoteric_metal', qty: 1 }, { id: 'arcane_essence', qty: 500 }] },
-            'esoteric_block': { name: 'Esoteric Block', tier: 'Esoteric', inputs: [{ id: 'esoteric_ingot', qty: 9 }] },
-            'esoteric_nugget': { name: 'Esoteric Nugget', yield: 9, inputs: [{ id: 'esoteric_ingot', qty: 1 }] },
-            'esoteric_rune': { name: 'Esoteric Rune', inputs: [{ id: 'esoteric_nugget', qty: 6 }, { id: 'arcane_tablet', qty: 1 }] },
-            'esoteric_sheet': { name: 'Esoteric Sheet', inputs: [{ id: 'powdered_esoteric', qty: 1 }, { id: 'lava', qty: 500 }] },
-            'arcane_tablet': { name: 'Arcane Tablet', inputs: [{ id: 'aerial_spirit', qty: 8 }, { id: 'aqueous_spirit', qty: 8 }, { id: 'earthen_spirit', qty: 8 }, { id: 'infernal_spirit', qty: 8 }, { id: 'eldritch_spirit', qty: 2 }, { id: 'arcane_log', qty: 2 }, { id: 'processed_soulstone', qty: 8 }, { id: 'hex_ash', qty: 2 }] },
-            'powdered_esoteric': { name: 'Powdered Esoteric', yield: 2, useArcaneReturn: true, inputs: [{ id: 'esoteric_ingot', qty: 1 }] },
-            
-            // --- MITHRIL ---
-            'mithril_ingot': { name: 'Mithril Ingot', tier: 'Mithril', inputs: [{ id: 'polished_mithril_metal', qty: 1 }, { id: 'lava', qty: 3000 }, { id: 'pure_vitae', qty: 1500 }] },
-            'mithril_block': { name: 'Mithril Block', tier: 'Mithril', inputs: [{ id: 'mithril_ingot', qty: 9 }] },
-            'mithril_nugget': { name: 'Mithril Nugget', yield: 9, inputs: [{ id: 'mithril_ingot', qty: 1 }] },
-            'mithril_rune': { name: 'Mithril Rune', inputs: [{ id: 'mithril_nugget', qty: 6 }, { id: 'arcane_tablet', qty: 1 }] },
-            'mithril_sheet': { name: 'Mithril Sheet', inputs: [{ id: 'lava', qty: 500 }, { id: 'powdered_mithril', qty: 1 }] },
-            'powdered_mithril': { name: 'Powdered Mithril', yield: 2, useArcaneReturn: true, inputs: [{ id: 'mithril_ingot', qty: 1 }] },
-            
-            // --- ADAMANTITE ---
-            'adamantite_ingot': { name: 'Adamantite Ingot', tier: 'Adamantite', inputs: [{ id: 'adamantite_shard', qty: 4 }, { id: 'sentient_obelisk_durability', qty: 1 }, { id: 'arcane_essence', qty: 500 }] },
-            'adamantite_block': { name: 'Adamantite Block', tier: 'Adamantite', inputs: [{ id: 'adamantite_ingot', qty: 9 }] },
-            'adamantite_nugget': { name: 'Adamantite Nugget', yield: 9, inputs: [{ id: 'adamantite_ingot', qty: 1 }] },
-            'adamantite_shard': { name: 'Adamantite Shard', yield: 4, inputs: [{ id: 'adamantite_crystal', qty: 1 }] },
-            'adamantite_crystal': { name: 'Adamantite Crystal', inputs: [{ id: 'compacted_adamantite', qty: 4 }] },
-            'compacted_adamantite': { name: 'Compacted Adamantite', yield: 4, inputs: [{ id: 'adamantite_paste', qty: 1 }] },
-            'adamantite_paste': { name: 'Adamantite Paste', inputs: [{ id: 'powdered_mithril', qty: 1 }, { id: 'harmonic_essence', qty: 500 }, { id: 'arcane_essence', qty: 500 }] },
-            'adamantite_sheet': { name: 'Adamantite Sheet', inputs: [{ id: 'lava', qty: 500 }, { id: 'powdered_adamantite', qty: 1 }] },
-            'adamantite_rune': { name: 'Adamantite Rune', inputs: [{ id: 'adamantite_nugget', qty: 6 }, { id: 'void_tablet', qty: 1 }] },
-            'powdered_adamantite': { name: 'Powdered Adamantite', yield: 2, useArcaneReturn: true, inputs: [{ id: 'adamantite_ingot', qty: 1 }] },
-            
-            // --- ELITE & HEART MATERIALS ---
-            'soulbound_adamantite': { name: 'Soulbound Adamantite', tier: 'Elite', inputs: [{ id: 'adamantite_ingot', qty: 1 }, { id: 'arcane_spirit', qty: 64 }, { id: 'eldritch_spirit', qty: 48 }, { id: 'wicked_spirit', qty: 64 }] },
-            'stellarforge_component': { name: 'Stellarforge Component', tier: 'Elite', inputs: [{ id: 'adamantite_ingot', qty: 11 }, { id: 'adamantite_plate', qty: 7 }, { id: 'adamantite_shard', qty: 7 }, { id: 'luminous_core', qty: 3 }] },
-            'adamantite_spirit_block': { name: 'Spirit Adamantite Block', inputs: [{ id: 'adamantite_block', qty: 1 }, { id: 'arcane_spirit', qty: 64 }, { id: 'eldritch_spirit', qty: 48 }, { id: 'wicked_spirit', qty: 64 }] },
-            'adamantite_component': { name: 'Adamantite Component', inputs: [{ id: 'adamantite_cell', qty: 1 }, { id: 'adamantite_ingot', qty: 1 }, { id: 'adamantite_shard', qty: 3 }, { id: 'harmonic_sheet', qty: 7 }, { id: 'adamantite_heart', qty: 1 }] },
-            'adamantite_heart': { name: 'Adamantite Heart', inputs: [{ id: 'adamantite_cell', qty: 2 }, { id: 'adamantite_ingot', qty: 6 }, { id: 'adamantite_shard', qty: 2 }, { id: 'charged_core', qty: 1 }] },
-            'harmonic_sheet': { name: 'Harmonic Sheet', yield: 2, inputs: [{ id: 'harmonic_ingot', qty: 1 }] },
-            'harmonic_crystalheart': { name: 'Harmonic Crystalheart', inputs: [{ id: 'harmonic_ingot', qty: 10 }, { id: 'adamantite_shard', qty: 7 }, { id: 'luminous_core', qty: 4 }] },
+          <!-- Quantidade -->
+          <div class="mb-6">
+            <label class="block text-xs font-semibold text-stone-400 mb-2 uppercase tracking-wider">Quantidade</label>
+            <input type="number" id="targetAmount" value="1" min="1" class="w-full bg-stone-950 border border-stone-700 rounded-xl p-3 text-white font-mono text-lg focus:outline-none focus:border-purple-500 transition-colors">
+          </div>
 
-            // --- SMITHING TEMPLATES ---
-            'arcane_template': { 
-                name: 'Arcane Template', tier: 'Templates', 
-                inputs: [{ id: 'arcane_ingot', qty: 4 }, { id: 'arcane_block', qty: 1 }, { id: 'arcane_rune', qty: 3 }, { id: 'tainted_rock_tablet', qty: 1 }],
-                cheapInputs: [{ id: 'arcane_block', qty: 1 }, { id: 'netherrack', qty: 4 }, { id: 'arcane_rune', qty: 4 }, { id: 'arcane_sheet', qty: 4 }]
-            },
-            'ancestral_template': { 
-                name: 'Ancestral Template', tier: 'Templates', 
-                inputs: [{ id: 'arcane_template', qty: 1 }, { id: 'ancestral_block', qty: 2 }, { id: 'ancestral_ingot', qty: 4 }, { id: 'ancestral_rune', qty: 12 }, { id: 'processed_soulstone', qty: 10 }, { id: 'arcane_spirit', qty: 16 }, { id: 'earthen_spirit', qty: 8 }, { id: 'infernal_spirit', qty: 8 }],
-                cheapInputs: [{ id: 'ancestral_block', qty: 1 }, { id: 'arcane_ingot', qty: 4 }, { id: 'ancestral_rune', qty: 4 }, { id: 'ancestral_sheet', qty: 4 }]
-            },
-            'ascendant_template': { 
-                name: 'Ascendant Template', tier: 'Templates', 
-                inputs: [{ id: 'ancestral_template', qty: 1 }, { id: 'ascendant_ingot', qty: 4 }, { id: 'ascendant_block', qty: 2 }, { id: 'ascendant_rune', qty: 2 }],
-                cheapInputs: [{ id: 'ascendant_block', qty: 1 }, { id: 'ancestral_ingot', qty: 4 }, { id: 'ascendant_rune', qty: 4 }, { id: 'ascendant_sheet', qty: 4 }]
-            },
-            'esoteric_template': { 
-                name: 'Esoteric Template', tier: 'Templates', 
-                inputs: [{ id: 'ascendant_template', qty: 1 }, { id: 'esoteric_ingot', qty: 4 }, { id: 'esoteric_block', qty: 2 }, { id: 'esoteric_rune', qty: 2 }],
-                cheapInputs: [{ id: 'esoteric_block', qty: 1 }, { id: 'ascendant_ingot', qty: 4 }, { id: 'esoteric_rune', qty: 4 }, { id: 'esoteric_sheet', qty: 4 }]
-            },
-            'mithril_template': { 
-                name: 'Mithril Template', tier: 'Templates', 
-                inputs: [{ id: 'esoteric_template', qty: 1 }, { id: 'mithril_block', qty: 1 }, { id: 'mithril_ingot', qty: 2 }, { id: 'charged_core', qty: 1 }, { id: 'mithril_rune', qty: 2 }],
-                cheapInputs: [{ id: 'mithril_block', qty: 1 }, { id: 'mithril_sheet', qty: 4 }, { id: 'esoteric_ingot', qty: 4 }]
-            },
-            'adamantite_template': { 
-                name: 'Adamantite Template', tier: 'Templates', 
-                inputs: [{ id: 'mithril_template', qty: 1 }, { id: 'adamantite_ingot', qty: 8 }, { id: 'adamantite_shard', qty: 5 }, { id: 'adamantite_sheet', qty: 6 }, { id: 'adamantite_rune', qty: 5 }, { id: 'harmonic_crystalheart', qty: 2 }],
-                cheapInputs: [{ id: 'adamantite_block', qty: 1 }, { id: 'adamantite_sheet', qty: 4 }, { id: 'mithril_ingot', qty: 4 }, { id: 'adamantite_rune', qty: 4 }]
-            },
-            'adamantite_heart_template': {
-                name: 'Adamantite (Heart) Evolution', tier: 'Templates',
-                inputs: [{ id: 'adamantite_template', qty: 1 }, { id: 'adamantite_plate', qty: 8 }, { id: 'adamantite_ingot', qty: 10 }, { id: 'adamantite_spirit_block', qty: 2 }, { id: 'adamantite_component', qty: 2 }, { id: 'soulbound_adamantite', qty: 5 }, { id: 'stellarforge_component', qty: 3 }, { id: 'mithril_armor_piece', qty: 1 }],
-                cheapInputs: [{ id: 'adamantite_template', qty: 1 }, { id: 'adamantite_plate', qty: 4 }, { id: 'adamantite_rune', qty: 4 }, { id: 'mithril_ingot', qty: 4 }]
-            },
+          <!-- Switch: Duplicar vs Craftar (Templates) -->
+          <label class="flex items-center justify-between cursor-pointer group mb-4">
+            <div class="pr-3">
+              <div class="text-[11px] font-bold text-white group-hover:text-purple-400 transition-colors uppercase tracking-wider">Duplicar Templates?</div>
+              <div class="text-[9px] text-stone-500 mt-1 uppercase">Muda receita para uso no Arcane Infuser.</div>
+            </div>
+            <div class="relative flex-shrink-0">
+              <input type="checkbox" id="templateMethod" class="sr-only" checked>
+              <div class="block bg-purple-600 w-10 h-6 rounded-full border border-purple-500 transition-colors" id="switchTmplBg"></div>
+              <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform translate-x-4" id="switchTmplDot"></div>
+            </div>
+          </label>
 
-            // --- ARMOR CHAIN ---
-            'mithril_armor_piece': { 
-                name: 'Mithril Boots', tier: 'Armor', 
-                inputs: [
-                    { id: 'esoteric_magical_boots', qty: 1 }, { id: 'mithril_ingot', qty: 1 }, { id: 'mithril_template', qty: 1 }, { id: 'mithril_rune', qty: 6 },
-                    { id: 'arcane_spirit', qty: 64 }, { id: 'earthen_spirit', qty: 48 }, { id: 'infernal_spirit', qty: 48 }, { id: 'eldritch_spirit', qty: 32 }
-                ] 
-            },
-            'esoteric_magical_boots': {
-                name: 'Esoteric Magical Boots', 
-                inputs: [
-                    { id: 'ascendant_boots', qty: 1 }, { id: 'esoteric_ingot', qty: 1 }, { id: 'esoteric_template', qty: 1 }, { id: 'esoteric_rune', qty: 4 },
-                    { id: 'arcane_spirit', qty: 32 }, { id: 'earthen_spirit', qty: 24 }, { id: 'infernal_spirit', qty: 24 }, { id: 'eldritch_spirit', qty: 16 }
-                ]
-            },
-            'ascendant_boots': { name: 'Ascendant Boots', inputs: [{ id: 'ancestral_boots', qty: 1 }, { id: 'ascendant_ingot', qty: 1 }, { id: 'ascendant_template', qty: 1 }] },
-            'ancestral_boots': { name: 'Ancestral Boots', inputs: [{ id: 'arcane_boots', qty: 1 }, { id: 'ancestral_ingot', qty: 1 }, { id: 'ancestral_template', qty: 1 }] },
-            'arcane_boots': { name: 'Arcane Boots', inputs: [{ id: 'netherite_boots', qty: 1 }, { id: 'arcane_ingot', qty: 1 }, { id: 'arcane_template', qty: 1 }] },
-            'netherite_boots': { name: 'Netherite Boots', inputs: [{ id: 'diamond_boots', qty: 1 }, { id: 'netherite_ingot', qty: 1 }, { id: 'netherite_smithing_template', qty: 1 }] },
-            'diamond_boots': { name: 'Diamond Boots', inputs: [{ id: 'diamond', qty: 4 }] },
+          <!-- Switch: Produzir Arcane Ingot -->
+          <label class="flex items-center justify-between cursor-pointer group mb-6">
+            <div class="pr-3">
+              <div class="text-[11px] font-bold text-white group-hover:text-purple-400 transition-colors uppercase tracking-wider">Sintetizar Arcane Ingot?</div>
+              <div class="text-[9px] text-stone-500 mt-1 uppercase">Força consumo de Ferro e Durabilidade.</div>
+            </div>
+            <div class="relative flex-shrink-0">
+              <input type="checkbox" id="craftArcane" class="sr-only" checked>
+              <div class="block bg-purple-600 w-10 h-6 rounded-full border border-purple-500 transition-colors" id="switchBg"></div>
+              <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform translate-x-4" id="switchDot"></div>
+            </div>
+          </label>
 
-            // --- CORES & OBELISK ---
-            'sentient_obelisk_durability': { name: 'Obelisk Usage', yield: 1024, inputs: [{ id: 'sentient_obelisk', qty: 1 }] },
-            'sentient_obelisk': { name: 'Sentient Obelisk', inputs: [{ id: 'charged_core', qty: 1 }, { id: 'adamantite_shard', qty: 1 }, { id: 'adamantite_cell', qty: 1 }, { id: 'harmonic_ingot', qty: 1 }, { id: 'luminous_core', qty: 1 }] },
-            'charged_core': { name: 'Charged Core', yield: 512, inputs: [{ id: 'ethereal_core', qty: 1 }] },
-            'luminous_core': { name: 'Luminous Core', inputs: [{ id: 'aerial_spirit', qty: 16 }, { id: 'aqueous_spirit', qty: 16 }, { id: 'sagrado_spirit', qty: 16 }, { id: 'arcane_spirit', qty: 16 }, { id: 'adamantite_shard', qty: 1 }, { id: 'golden_brilliance', qty: 1 }, { id: 'harmonic_ingot', qty: 1 }, { id: 'oblivion_core', qty: 1 }] },
-            'harmonic_ingot': { name: 'Harmonic Ingot', inputs: [{ id: 'blaze_powder', qty: 2 }, { id: 'harmonic_essence', qty: 30 }, { id: 'corrupted_fragment', qty: 1 }] },
-            'corrupted_fragment': { name: 'Corrupted Fragment', inputs: [{ id: 'etherium_core', qty: 1 }] },
-            'etherium_core': { name: 'Etherium Core', inputs: [{ id: 'mithril_ingot', qty: 4 }, { id: 'netherite_scrap', qty: 4 }, { id: 'arcane_pebble', qty: 1 }] },
-            'ethereal_core': { name: 'Ethereal Core', inputs: [{ id: 'harmonic_essence', qty: 500 }, { id: 'arcane_pebble', qty: 1 }, { id: 'ethereal_husk', qty: 1 }] },
-            'ethereal_husk': { name: 'Ethereal Husk', yield: 2, inputs: [{ id: 'mithril_ingot', qty: 1 }, { id: 'thermal_monitor_durability', qty: 1 }, { id: 'oblivion_core', qty: 1 }] },
-            'oblivion_core': { name: 'Oblivion Core', inputs: [{ id: 'aerial_spirit', qty: 16 }, { id: 'aqueous_spirit', qty: 16 }, { id: 'sagrado_spirit', qty: 16 }, { id: 'eldritch_spirit', qty: 16 }, { id: 'processed_soulstone', qty: 2 }, { id: 'hallowed_gold', qty: 4 }, { id: 'powdered_esoteric', qty: 2 }, { id: 'fused_consciousness', qty: 1 }] },
-            'adamantite_cell': { name: 'Adamantite Cell', inputs: [{ id: 'adamantite_shard', qty: 4 }, { id: 'mana_upgrade_orb', qty: 4 }, { id: 'ethereal_conduit', qty: 1 }] },
-            'ethereal_conduit': { name: 'Ethereal Conduit', inputs: [{ id: 'ethereal_catalyst', qty: 1 }] },
-            'ethereal_catalyst': { name: 'Ethereal Catalyst', inputs: [{ id: 'adamantite_shard', qty: 3 }, { id: 'arcane_pebble', qty: 3 }, { id: 'mithril_nugget', qty: 3 }, { id: 'mithril_sheet', qty: 1 }] },
-            
-            // --- AUXILIARES ---
-            'thermal_monitor_durability': { name: 'Monitor Usage', yield: 256, inputs: [{ id: 'thermal_monitor_mechanism', qty: 1 }] },
-            'thermal_monitor_mechanism': { name: 'Thermal Monitor Mechanism', inputs: [{ id: 'brass_ingot', qty: 5 }, { id: 'obsidian', qty: 5 }, { id: 'redstone', qty: 5 }] },
-            'netherite_ingot': { name: 'Netherite Ingot', inputs: [{ id: 'gold_ingot', qty: 4 }, { id: 'netherite_scrap', qty: 4 }] },
-            'soul_stained_steel_plating': { name: 'Soul Steel Plating', yield: 2, inputs: [{ id: 'soul_stained_steel_ingot', qty: 1 }, { id: 'soul_stained_steel_nugget', qty: 4 }] },
-            'soul_stained_steel_ingot': { name: 'Soul Steel Ingot', inputs: [{ id: 'processed_soulstone', qty: 4 }, { id: 'wicked_spirit', qty: 3 }, { id: 'arcane_spirit', qty: 1 }, { id: 'earthen_spirit', qty: 1 }] },
-            'soul_stained_steel_nugget': { name: 'Soul Steel Nugget', yield: 9, inputs: [{ id: 'soul_stained_steel_ingot', qty: 1 }] },
-            'golden_brilliance': { name: 'Golden Brilliance', inputs: [{ id: 'golden_ascendance_plate', qty: 1 }, { id: 'experience_block', qty: 4 }] },
-            'golden_ascendance_plate': { name: 'Golden Ascendance Plate', yield: 9, inputs: [{ id: 'golden_ascendance_block', qty: 1 }] },
-            'golden_ascendance_block': { name: 'Golden Ascendance Block', inputs: [{ id: 'ascendant_block', qty: 1 }, { id: 'gold_block', qty: 8 }] },
-            'iron_block': { name: 'Iron Block', inputs: [{ id: 'iron_ingot', qty: 9 }] }
-        };
+          <hr class="border-stone-800 mb-6">
 
-        const ITEMS_DATA = {
-            'arcane_essence': { name: 'Arcane Essence', unit: 'mb', color: 'text-purple-400' },
-            'lava': { name: 'Lava', unit: 'mb', color: 'text-orange-500' },
-            'harmonic_essence': { name: 'Harmonic Essence', unit: 'mb', color: 'text-indigo-300' },
-            'pure_vitae': { name: 'Pure Vitae', unit: 'mb', color: 'text-cyan-300' },
-            'cursed_vitae': { name: 'Cursed Vitae', unit: 'mb', color: 'text-rose-700' },
-            'runic_sap': { name: 'Runic Sap', unit: 'un', color: 'text-cyan-400' },
-            'iron_ingot': { name: 'Iron Ingot', unit: 'un', color: 'text-zinc-400' },
-            'gold_ingot': { name: 'Gold Ingot', unit: 'un', color: 'text-yellow-500' },
-            'netherite_scrap': { name: 'Netherite Scrap', unit: 'un', color: 'text-neutral-500' },
-            'netherrack': { name: 'Netherrack', unit: 'un', color: 'text-red-800' },
-            'arcane_log': { name: 'Arcane Log', unit: 'un', color: 'text-emerald-900' },
-            'hex_ash': { name: 'Hex Ash', unit: 'un', color: 'text-pink-300' },
-            'arcane_pebble': { name: 'Arcane Pebble', unit: 'un', color: 'text-purple-200' },
-            'processed_soulstone': { name: 'Soulstone', unit: 'un', color: 'text-blue-400' },
-            'infernal_spirit': { name: 'Infernal Spirit', unit: 'un', color: 'text-red-500' },
-            'arcane_spirit': { name: 'Arcane Spirit', unit: 'un', color: 'text-purple-500' },
-            'earthen_spirit': { name: 'Earthen Spirit', unit: 'un', color: 'text-yellow-700' },
-            'eldritch_spirit': { name: 'Eldritch Spirit', unit: 'un', color: 'text-indigo-600' },
-            'aerial_spirit': { name: 'Aerial Spirit', unit: 'un', color: 'text-blue-200' },
-            'aqueous_spirit': { name: 'Aqueous Spirit', unit: 'un', color: 'text-sky-400' },
-            'sagrado_spirit': { name: 'Sacred Spirit', unit: 'un', color: 'text-yellow-200' },
-            'wicked_spirit': { name: 'Wicked Spirit', unit: 'un', color: 'text-pink-600' },
-            'blaze_powder': { name: 'Blaze Powder', unit: 'un', color: 'text-orange-400' },
-            'brass_ingot': { name: 'Brass Ingot', unit: 'un', color: 'text-yellow-600' },
-            'obsidian': { name: 'Obsidian', unit: 'un', color: 'text-purple-900' },
-            'redstone': { name: 'Redstone', unit: 'un', color: 'text-red-600' },
-            'null_slate': { name: 'Null Slate', unit: 'un', color: 'text-zinc-600' },
-            'void_salt': { name: 'Void Salt', unit: 'un', color: 'text-blue-200' },
-            'diamond': { name: 'Diamond', unit: 'un', color: 'text-sky-300' },
-            'condensed_runic_sap': { name: 'Condensed Runic Sap', unit: 'un', color: 'text-cyan-400' },
-            'condensed_cursed_sap': { name: 'Condensed Cursed Sap', unit: 'un', color: 'text-emerald-700' },
-            'quartz': { name: 'Quartz', unit: 'un', color: 'text-zinc-100' },
-            'gold_block': { name: 'Gold Block', unit: 'un', color: 'text-yellow-400' },
-            'sand': { name: 'Sand', unit: 'un', color: 'text-orange-200' },
-            'paper': { name: 'Paper', unit: 'un', color: 'text-white' },
-            'experience_block': { name: 'XP Block', unit: 'un', color: 'text-green-400' },
-            'mana_upgrade_orb': { name: 'Mana Orb', unit: 'un', color: 'text-rose-500' },
-            'adamantite_plate': { name: 'Adamantite Plate', unit: 'un', color: 'text-rose-300' },
-            'netherite_smithing_template': { name: 'Netherite Template', unit: 'un', color: 'text-zinc-700' }
-        };
+          <!-- SLIDERS DE SORTE / RNG -->
+          <h3 class="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-4 flex items-center gap-2">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Rendimento & Sorte (RNG)
+          </h3>
+          
+          <!-- Slider Ancestral -->
+          <div class="mb-6">
+            <div class="flex justify-between items-end mb-2">
+              <label class="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Sucesso Ancestral</label>
+              <span class="text-xs font-mono font-bold text-emerald-400" id="valAncestral">77%</span>
+            </div>
+            <input type="range" id="sliderAncestral" min="0" max="100" value="77" class="w-full h-1 bg-stone-800 rounded-lg">
+            <p class="text-[9px] text-stone-500 mt-2 uppercase tracking-wide">Desvio das falhas (Nuggets) na montagem.</p>
+          </div>
 
-        function App() {
-            const [viewMode, setViewMode] = useState('calc');
-            const [targetItem, setTargetItem] = useState('adamantite_heart_template');
-            const [quantityInput, setQuantityInput] = useState('1');
-            const [ancestralChance, setAncestralChance] = useState(77);
-            const [arcaneReturnChance, setArcaneReturnChance] = useState(75);
-            const [useCheapCraft, setUseCheapCraft] = useState(false);
-            const [completedItems, setCompletedItems] = useState(new Set());
+          <!-- Slider Crushing -->
+          <div class="mb-2">
+            <div class="flex justify-between items-end mb-2">
+              <label class="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Retorno Crushing (Pó)</label>
+              <span class="text-xs font-mono font-bold text-emerald-400" id="valCrushing">75%</span>
+            </div>
+            <input type="range" id="sliderCrushing" min="0" max="75" value="75" class="w-full h-1 bg-stone-800 rounded-lg">
+            <p class="text-[9px] text-stone-500 mt-2 uppercase tracking-wide">Chance de não consumir o Ingot na moenda.</p>
+          </div>
 
-            const quantity = Math.max(0, parseInt(quantityInput) || 0);
+        </div>
+      </aside>
 
-            const totals = useMemo(() => {
-                const results = {};
-                const surplusPool = {};
+      <!-- Painel de Resultados -->
+      <main class="lg:col-span-2 space-y-6">
+        
+        <!-- Materiais Base (Total Bruto) -->
+        <div class="bg-stone-900/40 border border-stone-800 p-6 rounded-[2rem] shadow-2xl backdrop-blur-xl">
+          <h2 class="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-4 flex items-center gap-2">
+            <i data-lucide="box" class="w-4 h-4"></i> Total Bruto de Recursos (Farm)
+          </h2>
+          
+          <div id="materialsGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <!-- Items inseridos via JS -->
+          </div>
+        </div>
 
-                function calculate(itemId, requiredQty, parentName = null) {
-                    if (requiredQty <= 0.0001) return;
+        <!-- Árvore de Produção (Pastas) -->
+        <div class="bg-stone-900/40 border border-stone-800 p-6 rounded-[2rem] shadow-2xl backdrop-blur-xl">
+          <h2 class="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-4 flex items-center gap-2">
+            <i data-lucide="network" class="w-4 h-4"></i> Árvore de Produção (Passo a Passo)
+          </h2>
+          
+          <div id="treeContainer" class="bg-stone-950/80 border border-stone-800 rounded-xl p-4 overflow-hidden">
+            <!-- A árvore será renderizada aqui -->
+          </div>
+        </div>
 
-                    const availableInSurplus = surplusPool[itemId] || 0;
-                    const takenFromSurplus = Math.min(requiredQty, availableInSurplus);
-                    let needed = requiredQty - takenFromSurplus;
-                    surplusPool[itemId] = Math.max(0, availableInSurplus - takenFromSurplus);
+        <!-- Ferramentas e Durabilidade -->
+        <div class="bg-stone-900/40 border border-stone-800 p-6 rounded-[2rem] shadow-2xl backdrop-blur-xl">
+          <h2 class="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-4 flex items-center gap-2">
+            <i data-lucide="hammer" class="w-4 h-4"></i> Desgaste de Ferramentas
+          </h2>
+          
+          <div id="toolsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <!-- Ferramentas inseridas via JS -->
+          </div>
+        </div>
 
-                    if (completedItems.has(itemId)) needed = 0;
+      </main>
+    </div>
+  </div>
 
-                    if (!results[itemId]) {
-                        results[itemId] = { net: 0, gross: 0, isResource: false, requestedBy: new Set() };
-                    }
-                    results[itemId].net += needed;
-                    results[itemId].gross += requiredQty;
-                    if (parentName) results[itemId].requestedBy.add(parentName);
+  <script>
+    // Inicializar Ícones
+    lucide.createIcons();
 
-                    if (needed <= 0.0001) return;
+    /* =========================================
+       1. CONFIGURAÇÕES E DURABILIDADE
+       ========================================= */
+    const TOOLS_MAX_DURABILITY = {
+      "tenebris:ascendant_paper": 16,
+      "tenebris:thermal_monitor_mechanism": 256,
+      "tenebris:charged_core": 512,
+      "tenebris:sentient_obelisk": 1024
+    };
 
-                    const recipe = RECIPES[itemId];
-                    if (!recipe) {
-                        results[itemId].isResource = true;
-                        return;
-                    }
+    /* =========================================
+       2. BANCO DE DADOS DINÂMICO
+       ========================================= */
+    const recipes = {
+      // --- COMPONENTES MALUM ---
+      "malum:void_tablet": { yield: 1, ingredients: [ { item: "malum:void_salts", amount: 8 }, { item: "malum:null_slate", amount: 8 }, { item: "malum:eldritch_spirit", amount: 4 }, { item: "malum:tainted_rock_tablet", amount: 1 } ] },
+      "malum:tainted_rock_tablet": { yield: 1, ingredients: [ { item: "malum:aerial_spirit", amount: 8 }, { item: "malum:aqueous_spirit", amount: 8 }, { item: "malum:earthen_spirit", amount: 8 }, { item: "malum:infernal_spirit", amount: 8 }, { item: "malum:eldritch_spirit", amount: 2 } ] },
+      "malum:soul_stained_steel_plating": { yield: 1, ingredients: [ { item: "malum:soul_stained_steel_nugget", amount: 4 }, { item: "malum:soul_stained_steel_ingot", amount: 1 } ] },
+      "malum:soul_stained_steel_nugget": { yield: 9, ingredients: [ { item: "malum:soul_stained_steel_ingot", amount: 1 } ] },
+      "malum:soul_stained_steel_ingot": { yield: 1, ingredients: [ { item: "malum:wicked_spirit", amount: 3 }, { item: "malum:earthen_spirit", amount: 1 }, { item: "malum:arcane_spirit", amount: 1 }, { item: "minecraft:iron_ingot", amount: 1 }, { item: "malum:processed_soulstone", amount: 4 } ] },
 
-                    const yieldPerCraft = recipe.yield || 1;
-                    let probFactor = 1;
-                    if (itemId === 'ancestral_ingot') probFactor = 1 / (ancestralChance / 100);
-                    else if (recipe.useArcaneReturn) probFactor = (100 - arcaneReturnChance) / 100;
-                    else if (recipe.chance) probFactor = 1 / recipe.chance;
+      // --- FLUIDOS ---
+      "fluid:harmonic_essence": { yield: 1000, ingredients: [{ item: "tenebris:powdered_arcane_ingot", amount: 8 }] },
+      "fluid:pure_vitae": { yield: 1000, ingredients: [{ item: "tenebris:powdered_arcane_ingot", amount: 8 }] },
+      "fluid:cursed_vitae": { yield: 1000, ingredients: [{ item: "tenebris:powdered_arcane_ingot", amount: 8 }] },
 
-                    const numCrafts = Math.ceil(needed / (yieldPerCraft / probFactor));
-                    const totalProduced = numCrafts * yieldPerCraft;
-                    
-                    const leftOver = totalProduced - (needed * probFactor);
-                    if (leftOver > 0.001) surplusPool[itemId] = (surplusPool[itemId] || 0) + leftOver;
+      // --- BLOCOS E PEPITAS GERAIS ---
+      "tenebris:arcane_block": { yield: 1, ingredients: [{ item: "tenebris:arcane_ingot", amount: 9 }] },
+      "tenebris:arcane_nugget": { yield: 9, ingredients: [{ item: "tenebris:arcane_ingot", amount: 1 }] },
+      "tenebris:ancestral_block": { yield: 1, ingredients: [{ item: "tenebris:ancestral_ingot", amount: 9 }] },
+      "tenebris:ancestral_nugget": { yield: 9, ingredients: [{ item: "tenebris:ancestral_ingot", amount: 1 }] },
+      "tenebris:ascendant_nugget": { yield: 9, ingredients: [{ item: "tenebris:ascendant_ingot", amount: 1 }] },
 
-                    // LÓGICA PROGRESSIVA SMART
-                    const isSubTemplate = itemId.endsWith('_template') && itemId !== targetItem;
-                    const inputs = (recipe.cheapInputs && (useCheapCraft || isSubTemplate)) ? recipe.cheapInputs : recipe.inputs;
+      // --- RUNAS ---
+      "tenebris:arcane_rune": { yield: 1, ingredients: [{ item: "tenebris:arcane_nugget", amount: 6 }, { item: "malum:tainted_rock_tablet", amount: 1 }] },
+      "tenebris:ancestral_rune": { yield: 1, ingredients: [{ item: "tenebris:ancestral_nugget", amount: 6 }, { item: "malum:tainted_rock_tablet", amount: 1 }] },
+      "tenebris:ascendant_rune": { yield: 1, ingredients: [{ item: "tenebris:ascendant_nugget", amount: 6 }, { item: "malum:void_tablet", amount: 1 }] },
 
-                    inputs.forEach(input => {
-                        let inputQty = numCrafts * input.qty;
-                        calculate(input.id, inputQty, recipe.name);
-                    });
-                }
+      // --- NÍVEL 1: ARCANE ---
+      "tenebris:arcane_ingot": { yield: 1, ingredients: [ { item: "minecraft:iron_ingot", amount: 1 }, { item: "tenebris:thermal_monitor_mechanism", amount: 1, type: "durability" } ] },
+      "tenebris:powdered_arcane_ingot": { yield: 2, returnItem: "tenebris:arcane_ingot", ingredients: [{ item: "tenebris:arcane_ingot", amount: 1 }] },
+      "tenebris:arcane_sheet": { yield: 1, ingredients: [{ item: "tenebris:powdered_arcane_ingot", amount: 1 }] },
+      "tenebris:arcane_upgrade_smithing_template_hard": { yield: 1, ingredients: [ { item: "minecraft:netherite_upgrade_smithing_template", amount: 1 }, { item: "tenebris:arcane_block", amount: 1 }, { item: "tenebris:arcane_ingot", amount: 4 }, { item: "tenebris:arcane_rune", amount: 4 } ] },
+      "tenebris:arcane_upgrade_smithing_template_easy": { yield: 1, ingredients: [ { item: "tenebris:arcane_block", amount: 1 }, { item: "tenebris:arcane_sheet", amount: 4 }, { item: "minecraft:netherrack", amount: 4 }, { item: "tenebris:arcane_rune", amount: 4 } ] },
 
-                calculate(targetItem, quantity);
-                return { items: results, surplus: surplusPool };
-            }, [targetItem, quantity, ancestralChance, arcaneReturnChance, completedItems, useCheapCraft]);
+      // --- NÍVEL 2: ANCESTRAL ---
+      "tenebris:ancestral_ingot": { isAncestral: true, ingredients: [ { item: "tenebris:arcane_ingot", amount: 1 }, { item: "malum:infernal_spirit", amount: 4 }, { item: "malum:arcane_spirit", amount: 4 }, { item: "malum:earthen_spirit", amount: 4 } ] },
+      "tenebris:powdered_ancestral_ingot": { yield: 2, returnItem: "tenebris:ancestral_ingot", ingredients: [{ item: "tenebris:ancestral_ingot", amount: 1 }] },
+      "tenebris:ancestral_sheet": { yield: 1, ingredients: [{ item: "tenebris:powdered_ancestral_ingot", amount: 1 }] },
+      "tenebris:ancestral_upgrade_smithing_template_hard": { yield: 1, ingredients: [ { item: "tenebris:arcane_upgrade_smithing_template", amount: 1 }, { item: "tenebris:ancestral_rune", amount: 12 }, { item: "malum:processed_soulstone", amount: 10 }, { item: "tenebris:ancestral_block", amount: 2 }, { item: "tenebris:ancestral_ingot", amount: 4 }, { item: "malum:arcane_spirit", amount: 16 }, { item: "malum:earthen_spirit", amount: 8 }, { item: "malum:infernal_spirit", amount: 8 } ] },
+      "tenebris:ancestral_upgrade_smithing_template_easy": { yield: 1, ingredients: [ { item: "tenebris:ancestral_block", amount: 1 }, { item: "tenebris:ancestral_sheet", amount: 4 }, { item: "tenebris:arcane_ingot", amount: 4 }, { item: "tenebris:ancestral_rune", amount: 4 } ] },
 
-            const sortedRaw = Object.entries(totals.items).filter(([id]) => !RECIPES[id]).sort((a,b) => b[1].net - a[1].net);
-            const sortedInter = Object.entries(totals.items).filter(([id]) => RECIPES[id] && id !== targetItem).sort((a,b) => b[1].net - a[1].net);
+      // --- NÍVEL 3: ASCENDANT ---
+      "tenebris:hollow_ancestral_block": { yield: 1, ingredients: [{ item: "tenebris:ancestral_block", amount: 1 }] },
+      "tenebris:purified_ancestral_block": { yield: 1, ingredients: [ { item: "tenebris:hollow_ancestral_block", amount: 1 }, { item: "malum:soul_stained_steel_plating", amount: 24 }, { item: "malum:null_slate", amount: 16 }, { item: "malum:void_salts", amount: 16 }, { item: "malum:block_of_cthonic_gold", amount: 1 }, { item: "malum:eldritch_spirit", amount: 24 }, { item: "malum:arcane_spirit", amount: 24 }, { item: "malum:infernal_spirit", amount: 16 }, { item: "malum:sacred_spirit", amount: 16 }, { item: "malum:earthen_spirit", amount: 16 } ] },
+      "tenebris:ascendant_block": { yield: 1, ingredients: [ { item: "tenebris:purified_ancestral_block", amount: 1 }, { item: "minecraft:blaze_powder", amount: 8 }, { item: "malum:null_slate", amount: 16 } ] },
+      "tenebris:ascendant_ingot": { yield: 9, ingredients: [{ item: "tenebris:ascendant_block", amount: 1 }] },
+      "tenebris:powdered_ascendant_ingot": { yield: 2, returnItem: "tenebris:ascendant_ingot", ingredients: [{ item: "tenebris:ascendant_ingot", amount: 1 }] },
+      "tenebris:ascendant_sheet": { yield: 1, ingredients: [{ item: "tenebris:powdered_ascendant_ingot", amount: 1 }] },
+      "tenebris:ascendant_paper": { yield: 1, ingredients: [{ item: "tenebris:powdered_ascendant_ingot", amount: 1 }, { item: "create:sand_paper", amount: 1 }] },
+      "tenebris:ascendant_upgrade_smithing_template_hard": { yield: 1, ingredients: [ { item: "tenebris:ancestral_upgrade_smithing_template", amount: 1 }, { item: "tenebris:ascendant_block", amount: 2 }, { item: "tenebris:ascendant_ingot", amount: 4 }, { item: "tenebris:ascendant_rune", amount: 4 } ] },
+      "tenebris:ascendant_upgrade_smithing_template_easy": { yield: 1, ingredients: [ { item: "tenebris:ascendant_block", amount: 1 }, { item: "tenebris:ascendant_sheet", amount: 4 }, { item: "tenebris:ancestral_ingot", amount: 4 }, { item: "tenebris:ascendant_rune", amount: 4 } ] },
 
-            return (
-                <div className="min-h-screen p-4 max-w-5xl mx-auto">
-                    <header className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-zinc-800 pb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-violet-600 p-1.5 rounded shadow-lg shadow-purple-900/20"><Icon name="Calculator" className="text-white w-5 h-5" /></div>
-                            <h1 className="text-lg font-black uppercase tracking-tight italic leading-none">Tenebris <span className="text-violet-500 text-sm block sm:inline">Fabricator</span></h1>
-                        </div>
-                        <nav className="flex bg-zinc-900 p-1 rounded-lg border border-zinc-800 flex-wrap justify-center">
-                            {['calc', 'surplus', 'recipes'].map(m => (
-                                <button key={m} onClick={() => setViewMode(m)} className={"px-4 py-1.5 rounded-md text-[9px] font-bold uppercase transition-all " + (viewMode === m ? "bg-violet-600 text-white" : "text-zinc-500 hover:text-zinc-300")}>
-                                    {m === 'calc' ? 'Painel' : m === 'surplus' ? 'Sobras' : 'Guia'}
-                                </button>
-                            ))}
-                        </nav>
-                    </header>
+      // --- NÍVEL EXTRA ---
+      "tenebris:golden_ascendance_sheet": { yield: 1, ingredients: [{ item: "tenebris:golden_ascendance_ingot", amount: 1 }] },
+      "tenebris:golden_ascendance_ingot": { yield: 9, ingredients: [{ item: "tenebris:golden_ascendance_block", amount: 1 }] },
+      "tenebris:golden_ascendance_block": { yield: 1, ingredients: [{ item: "minecraft:gold_block", amount: 8 }, { item: "tenebris:ascendant_block", amount: 1 }] },
+      "tenebris:harmonic_ingot_sheet": { yield: 1, ingredients: [{ item: "tenebris:harmonic_ingot", amount: 1 }] },
+      "tenebris:harmonic_ingot": { yield: 1, ingredients: [ { item: "minecraft:blaze_powder", amount: 2 }, { item: "tenebris:corrupted_fragment", amount: 1 }, { item: "fluid:harmonic_essence", amount: 30 } ] }
+    };
 
-                    {viewMode === 'calc' ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                            <aside className="lg:col-span-4 space-y-4">
-                                <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 space-y-4 shadow-xl">
-                                    <div>
-                                        <label className="text-[9px] font-black text-zinc-500 uppercase mb-1 block tracking-widest">Alvo de Crafting</label>
-                                        <select value={targetItem} onChange={(e) => setTargetItem(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-xs font-bold outline-none focus:border-violet-500">
-                                            <optgroup label="Ingots & Elite Mats">
-                                                {Object.entries(RECIPES).filter(([_, r]) => r.tier && !['Templates', 'Armor'].includes(r.tier)).sort((a,b) => a[1].tier.localeCompare(b[1].tier)).map(([id, r]) => <option key={id} value={id}>{r.name} ({r.tier})</option>)}
-                                                <option value="soulbound_adamantite">Soulbound Adamantite (Elite)</option>
-                                                <option value="stellarforge_component">Stellarforge Component (Elite)</option>
-                                            </optgroup>
-                                            <optgroup label="Armors & Gear">
-                                                {Object.entries(RECIPES).filter(([_, r]) => r.tier === 'Armor').map(([id, r]) => <option key={id} value={id}>{r.name}</option>)}
-                                            </optgroup>
-                                            <optgroup label="Equipment (Templates)">
-                                                {Object.entries(RECIPES).filter(([_, r]) => r.tier === 'Templates').map(([id, r]) => <option key={id} value={id}>{r.name}</option>)}
-                                            </optgroup>
-                                            <optgroup label="Standard Metals">
-                                                {Object.entries(RECIPES).filter(([_, r]) => ['Arcane', 'Ancestral', 'Ascendant', 'Esoteric', 'Mithril'].includes(r.tier)).map(([id, r]) => <option key={id} value={id}>{r.name} ({r.tier})</option>)}
-                                            </optgroup>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-[9px] font-black text-zinc-500 uppercase mb-1 block tracking-widest">Quantidade</label>
-                                        <input type="text" value={quantityInput} onChange={(e) => setQuantityInput(e.target.value.replace(/[^0-9]/g, ''))} className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-lg font-mono font-black text-violet-400 outline-none" />
-                                    </div>
-                                    
-                                    <div className="pt-4 border-t border-zinc-800 space-y-4">
-                                        <div className="flex items-center justify-between group cursor-pointer" onClick={() => setUseCheapCraft(!useCheapCraft)}>
-                                            <div className="flex items-center gap-2">
-                                                <Icon name="Copy" className={useCheapCraft ? "text-violet-400" : "text-zinc-600"} />
-                                                <span className="text-[9px] font-black uppercase text-zinc-400">Modo Duplicação Global</span>
-                                            </div>
-                                            <div className={"w-8 h-4 rounded-full relative transition-all duration-200 " + (useCheapCraft ? "bg-violet-600" : "bg-zinc-800")}>
-                                                <div className={"absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-200 " + (useCheapCraft ? "left-[1.25rem]" : "left-0.5")} />
-                                            </div>
-                                        </div>
+    /* =========================================
+       3. LÓGICA RECURSIVA E GERAÇÃO DA ÁRVORE
+       ========================================= */
+    function calculateMaterials(targetId, targetAmount, craftArcaneEnabled, templateMethod) {
+      let baseMaterials = {};
+      let toolUsages = {};
 
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between text-[9px] font-black uppercase text-zinc-500"><span>Ancestral Success</span><span className="text-violet-400">{ancestralChance}%</span></div>
-                                            <input type="range" min="50" max="100" value={ancestralChance} onChange={(e) => setAncestralChance(e.target.value)} className="w-full h-1 bg-zinc-800 rounded-lg appearance-none" />
-                                            <div className="flex justify-between text-[9px] font-black uppercase text-zinc-500"><span>Return Rate</span><span className="text-violet-400">{arcaneReturnChance}%</span></div>
-                                            <input type="range" min="0" max="100" value={arcaneReturnChance} onChange={(e) => setArcaneReturnChance(e.target.value)} className="w-full h-1 bg-zinc-800 rounded-lg appearance-none" />
-                                        </div>
-                                    </div>
+      function addObj(obj, key, amount) {
+        if (!obj[key]) obj[key] = 0;
+        obj[key] += amount;
+      }
 
-                                    <button onClick={() => setCompletedItems(new Set())} className="w-full py-2 bg-zinc-800 text-zinc-500 rounded-md text-[9px] font-black uppercase flex items-center justify-center gap-2 hover:bg-zinc-700 hover:text-zinc-300 transition-all"><Icon name="RefreshCcw" /> Limpar Checklist</button>
-                                </div>
-                                <div className="p-3 bg-blue-900/10 border border-blue-500/20 rounded-lg">
-                                    <p className="text-[8px] font-bold uppercase text-blue-400 flex items-center gap-1.5 mb-1"><Icon name="Search" /> Progressão Inteligente</p>
-                                    <p className="text-[9px] text-blue-200/60 leading-relaxed italic">Componentes de níveis anteriores (como templates de mithril) são calculados no modo barato automaticamente.</p>
-                                </div>
-                            </aside>
+      const chanceAncestral = parseInt(document.getElementById('sliderAncestral').value) / 100;
+      const chanceCrushing = parseInt(document.getElementById('sliderCrushing').value) / 100;
 
-                            <main className="lg:col-span-8 space-y-6">
-                                <section>
-                                    <h2 className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-3 flex items-center gap-2"><Icon name="Database" className="text-purple-500" /> Recursos Base</h2>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {sortedRaw.map(([id, d]) => (
-                                            <div key={id} className={"p-2.5 rounded-lg flex flex-col justify-center card-base " + (d.net <= 0 ? "bg-emerald-500/5 border-emerald-500/20 opacity-40" : "bg-zinc-900 border-zinc-800")}>
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <div className="flex items-center gap-2.5 overflow-hidden w-full">
-                                                        <button onClick={() => {const n = new Set(completedItems); n.has(id) ? n.delete(id) : n.add(id); setCompletedItems(n);}} className={"p-1 rounded border shrink-0 " + (completedItems.has(id) ? "bg-emerald-600 border-emerald-600" : "border-zinc-700")}><Icon name="Check" className={completedItems.has(id) ? "text-white" : "text-transparent"} /></button>
-                                                        <div className="truncate flex-grow">
-                                                            <p className={"text-[9px] font-bold truncate " + (ITEMS_DATA[id]?.color || "")}>{ITEMS_DATA[id]?.name || id}</p>
-                                                            <p className="text-[12px] font-mono font-black text-white">{d.net <= 0 ? 'OK' : Math.ceil(d.net).toLocaleString()} <span className="text-[7px] text-zinc-500 font-bold uppercase">{ITEMS_DATA[id]?.unit || 'un'}</span></p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-wrap gap-1 mt-1 border-t border-zinc-800 pt-1.5 opacity-60">
-                                                    {[...d.requestedBy].map((p, i) => <span key={i} className="lineage-tag">{p}</span>)}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
+      // Função principal modificada para retornar Nós de Árvore (Tree Nodes)
+      function resolveRecipe(originalItemId, amountNeeded) {
+        if (amountNeeded <= 0) return null;
 
-                                <section>
-                                    <h2 className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-3 flex items-center gap-2"><Icon name="Layers" className="text-indigo-500" /> Processamento</h2>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {sortedInter.map(([id, d]) => (
-                                            <div key={id} className={"p-2.5 rounded-lg flex flex-col justify-center card-base " + (d.net <= 0 ? "bg-emerald-500/5 border-emerald-500/20 opacity-40" : "bg-zinc-900 border-zinc-800")}>
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <div className="flex items-center gap-2.5 overflow-hidden w-full">
-                                                        <button onClick={() => {const n = new Set(completedItems); n.has(id) ? n.delete(id) : n.add(id); setCompletedItems(n);}} className={"p-1 rounded border shrink-0 " + (completedItems.has(id) ? "bg-emerald-600 border-emerald-600" : "border-zinc-700")}><Icon name="Check" className={completedItems.has(id) ? "text-white" : "text-transparent"} /></button>
-                                                        <div className="truncate flex-grow">
-                                                            <p className="text-[9px] font-bold text-zinc-400 truncate tracking-tight">{RECIPES[id]?.name || id}</p>
-                                                            <p className="text-[12px] font-mono font-black text-white">{d.net <= 0 ? 'OK' : Math.ceil(d.net).toLocaleString()} <span className="text-[7px] text-zinc-500 font-bold uppercase">{ITEMS_DATA[id]?.unit || 'un'}</span></p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-wrap gap-1 mt-1 border-t border-zinc-800 pt-1.5 opacity-60">
-                                                    {[...d.requestedBy].map((p, i) => <span key={i} className="lineage-tag">{p}</span>)}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
-                            </main>
-                        </div>
-                    ) : viewMode === 'surplus' ? (
-                        <div className="bg-zinc-900/50 p-6 rounded-xl border border-zinc-800">
-                            <h2 className="text-sm font-black uppercase italic mb-6 tracking-tight flex items-center gap-2 tracking-widest text-emerald-500"><Icon name="Plus" /> Sobras do Processamento</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                {Object.entries(totals.surplus).filter(([_, q]) => q > 0.01).sort((a,b) => b[1]-a[1]).map(([id, qty]) => (
-                                    <div key={id} className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 flex justify-between items-center group">
-                                        <div className="overflow-hidden">
-                                            <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest truncate">{RECIPES[id]?.tier || 'SUB-ITEM'}</p>
-                                            <p className="text-[10px] font-bold text-zinc-200 truncate">{RECIPES[id]?.name || ITEMS_DATA[id]?.name || id}</p>
-                                        </div>
-                                        <p className="text-lg font-mono font-black text-emerald-500 ml-2">+{Math.floor(qty)}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {Object.entries(RECIPES).filter(([_, r]) => r.tier).sort((a,b) => a[1].tier.localeCompare(b[1].tier)).map(([id, r]) => (
-                                <div key={id} className="bg-zinc-900/40 p-3 rounded-lg border border-zinc-800 flex flex-col h-full card-base">
-                                    <div className="flex justify-between items-center mb-2"><h3 className="text-[9px] font-black text-zinc-100 uppercase tracking-tight italic">{r.name}</h3><span className="text-[6px] bg-violet-500/10 text-violet-400 px-1 py-0.5 rounded font-black uppercase">{r.tier}</span></div>
-                                    <div className="space-y-1 flex-grow">{r.inputs.map((i, idx) => <div key={idx} className="flex justify-between text-[8px] text-zinc-500 border-b border-zinc-800/30 pb-0.5 last:border-0"><span>{ITEMS_DATA[i.id]?.name || RECIPES[i.id]?.name || i.id}</span><span className="font-bold text-zinc-400">{i.qty} {ITEMS_DATA[i.id]?.unit || 'un'}</span></div>)}</div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            );
+        let finalId = originalItemId.replace('_hard', '').replace('_easy', '');
+        let node = { id: finalId, amount: amountNeeded, children: [], isBase: false, isTool: false };
+
+        // Regra do Arcane Ingot (Para e vira material base)
+        if (originalItemId === "tenebris:arcane_ingot" && !craftArcaneEnabled) {
+          addObj(baseMaterials, originalItemId, amountNeeded);
+          node.isBase = true;
+          return node;
         }
 
-        const container = document.getElementById('root');
-        const root = ReactDOM.createRoot(container);
-        root.render(<App />);
-    </script>
+        // Interceptador de Rotas de Templates
+        let itemId = originalItemId;
+        if (itemId.endsWith('_upgrade_smithing_template')) {
+          itemId = itemId + '_' + templateMethod;
+        }
+
+        if (recipes[itemId]) {
+          const recipe = recipes[itemId];
+
+          // ----- SUCESSO ANCESTRAL -----
+          if (recipe.isAncestral) {
+             const nuggetChance = 1 - chanceAncestral;
+             const expectedYieldInIngots = chanceAncestral * 1 + nuggetChance * (3 / 9);
+             const craftRuns = Math.ceil(amountNeeded / expectedYieldInIngots);
+             
+             recipe.ingredients.forEach(ing => {
+                if (ing.type === "durability") {
+                  addObj(toolUsages, ing.item, ing.amount * craftRuns);
+                  node.children.push({ id: ing.item, amount: ing.amount * craftRuns, children: [], isTool: true });
+                } else {
+                  let childNode = resolveRecipe(ing.item, ing.amount * craftRuns);
+                  if (childNode) node.children.push(childNode);
+                }
+             });
+             return node;
+          }
+
+          const craftRuns = Math.ceil(amountNeeded / recipe.yield);
+
+          // ----- CRUSHING RETURN -----
+          if (recipe.returnItem) {
+             const expectedReturn = craftRuns * chanceCrushing;
+
+             recipe.ingredients.forEach(ing => {
+                if (ing.item === recipe.returnItem) {
+                   const netAmount = (ing.amount * craftRuns) - expectedReturn;
+                   if (netAmount > 0) {
+                     let childNode = resolveRecipe(ing.item, netAmount);
+                     if(childNode) node.children.push(childNode);
+                   }
+                } else if (ing.type === "durability") {
+                   addObj(toolUsages, ing.item, ing.amount * craftRuns);
+                   node.children.push({ id: ing.item, amount: ing.amount * craftRuns, children: [], isTool: true });
+                } else {
+                   let childNode = resolveRecipe(ing.item, ing.amount * craftRuns);
+                   if (childNode) node.children.push(childNode);
+                }
+             });
+             return node;
+          }
+
+          // Puxar ingredientes padrão
+          recipe.ingredients.forEach(ing => {
+            if (ing.type === "durability") {
+              addObj(toolUsages, ing.item, ing.amount * craftRuns);
+              node.children.push({ id: ing.item, amount: ing.amount * craftRuns, children: [], isTool: true });
+            } else {
+              let childNode = resolveRecipe(ing.item, ing.amount * craftRuns);
+              if (childNode) node.children.push(childNode);
+            }
+          });
+        } else {
+          // Chegou na base
+          addObj(baseMaterials, finalId, amountNeeded);
+          node.isBase = true;
+        }
+
+        return node;
+      }
+
+      const craftingTree = resolveRecipe(targetId, targetAmount);
+      return { baseMaterials, toolUsages, craftingTree };
+    }
+
+    /* =========================================
+       4. UI E RENDERIZAÇÃO
+       ========================================= */
+    function formatName(id) {
+      let parts = id.split(':');
+      let nameStr = parts.length > 1 ? parts[1] : parts[0];
+      return nameStr.split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    // Função Recursiva para desenhar o HTML das Pastas (Árvore)
+    function renderTreeHTML(node) {
+      if (!node) return '';
+      
+      const name = formatName(node.id);
+      const amount = Math.ceil(node.amount);
+      
+      // É uma folha final (base) ou ferramenta? Renderiza apenas uma div simples
+      if (node.isBase || node.isTool || !node.children || node.children.length === 0) {
+        let icon = node.isTool ? 'hammer' : 'corner-down-right';
+        let colorClass = node.isTool ? 'text-amber-500' : 'text-stone-500';
+        return `
+          <div class="flex items-center gap-2 py-1.5 pl-2 hover:bg-stone-900/50 rounded transition-colors">
+            <i data-lucide="${icon}" class="w-3 h-3 ${colorClass}"></i>
+            <span class="font-mono font-bold text-white text-xs">${amount}x</span>
+            <span class="text-xs text-stone-400">${name}</span>
+          </div>
+        `;
+      }
+
+      // Tem filhos? Renderiza uma tag <details> (Pasta expansível)
+      let childrenHTML = node.children.map(child => renderTreeHTML(child)).join('');
+      
+      return `
+        <details class="group relative" open>
+          <summary class="flex items-center gap-2 cursor-pointer py-1.5 px-2 hover:bg-stone-900/50 rounded transition-colors select-none">
+            <i data-lucide="chevron-right" class="chevron-icon w-3 h-3 text-purple-500 transition-transform duration-200"></i>
+            <span class="font-mono font-black text-purple-400 text-xs">${amount}x</span>
+            <span class="text-xs font-semibold text-stone-200">${name}</span>
+            <span class="text-[9px] uppercase tracking-widest text-stone-600 ml-2">(Pasta de Produção)</span>
+          </summary>
+          <div class="relative pl-6 pb-1">
+            <div class="tree-line"></div>
+            ${childrenHTML}
+          </div>
+        </details>
+      `;
+    }
+
+    const elTargetItem = document.getElementById('targetItem');
+    const elTargetAmount = document.getElementById('targetAmount');
+    const elCraftArcane = document.getElementById('craftArcane');
+    const elTemplateMethod = document.getElementById('templateMethod');
+    const elSliderAncestral = document.getElementById('sliderAncestral');
+    const elValAncestral = document.getElementById('valAncestral');
+    const elSliderCrushing = document.getElementById('sliderCrushing');
+    const elValCrushing = document.getElementById('valCrushing');
+
+    function updateUI() {
+      const target = elTargetItem.value;
+      let amount = parseInt(elTargetAmount.value);
+      if (isNaN(amount) || amount < 1) amount = 1;
+      
+      const craftArcane = elCraftArcane.checked;
+      const templateMode = elTemplateMethod.checked ? 'easy' : 'hard';
+
+      // Atualiza Toggles
+      if(craftArcane) {
+        document.getElementById('switchBg').classList.replace('bg-stone-800', 'bg-purple-600');
+        document.getElementById('switchBg').classList.replace('border-stone-700', 'border-purple-500');
+        document.getElementById('switchDot').classList.add('translate-x-4');
+      } else {
+        document.getElementById('switchBg').classList.replace('bg-purple-600', 'bg-stone-800');
+        document.getElementById('switchBg').classList.replace('border-purple-500', 'border-stone-700');
+        document.getElementById('switchDot').classList.remove('translate-x-4');
+      }
+
+      if(templateMode === 'easy') {
+        document.getElementById('switchTmplBg').classList.replace('bg-stone-800', 'bg-purple-600');
+        document.getElementById('switchTmplBg').classList.replace('border-stone-700', 'border-purple-500');
+        document.getElementById('switchTmplDot').classList.add('translate-x-4');
+      } else {
+        document.getElementById('switchTmplBg').classList.replace('bg-purple-600', 'bg-stone-800');
+        document.getElementById('switchTmplBg').classList.replace('border-purple-500', 'border-stone-700');
+        document.getElementById('switchTmplDot').classList.remove('translate-x-4');
+      }
+
+      // Roda a matemática que agora devolve a Árvore também
+      const { baseMaterials, toolUsages, craftingTree } = calculateMaterials(target, amount, craftArcane, templateMode);
+
+      // Renderiza Base Materials
+      const gridMaterials = document.getElementById('materialsGrid');
+      gridMaterials.innerHTML = '';
+      if (Object.keys(baseMaterials).length === 0) {
+        gridMaterials.innerHTML = '<div class="text-stone-500 text-xs col-span-full">Nenhum material base necessário.</div>';
+      }
+      for (const [id, qty] of Object.entries(baseMaterials)) {
+        const finalQty = Math.ceil(qty);
+        if (finalQty <= 0) continue; 
+        const name = formatName(id);
+        gridMaterials.insertAdjacentHTML('beforeend', `
+          <div class="bg-stone-950/80 border border-stone-800 rounded-xl p-3 flex flex-col justify-between group">
+            <span class="text-[10px] text-stone-400 group-hover:text-emerald-400 transition-colors uppercase tracking-wider mb-2">${name}</span>
+            <span class="text-xl font-black font-mono text-white">${finalQty}</span>
+          </div>
+        `);
+      }
+
+      // Renderiza Árvore (O novo recurso!)
+      const treeContainer = document.getElementById('treeContainer');
+      if (craftingTree && craftingTree.children && craftingTree.children.length > 0) {
+        treeContainer.innerHTML = renderTreeHTML(craftingTree);
+      } else {
+        treeContainer.innerHTML = '<div class="text-stone-500 text-xs">Este item é básico e não possui etapas de produção detalhadas.</div>';
+      }
+      lucide.createIcons(); // Recarrega ícones da árvore recém-criada
+
+      // Renderiza Ferramentas
+      const gridTools = document.getElementById('toolsGrid');
+      gridTools.innerHTML = '';
+      if (Object.keys(toolUsages).length === 0) {
+        gridTools.innerHTML = '<div class="text-stone-500 text-xs col-span-full">Nenhuma ferramenta gasta nesta operação.</div>';
+      }
+      for (const [id, usesUsed] of Object.entries(toolUsages)) {
+        if(usesUsed <= 0) continue;
+        const maxDura = TOOLS_MAX_DURABILITY[id] || 1;
+        const integerItemsNeeded = Math.ceil(usesUsed / maxDura);
+        const percentage = Math.min(100, Math.round((usesUsed / (integerItemsNeeded * maxDura)) * 100));
+        
+        gridTools.insertAdjacentHTML('beforeend', `
+          <div class="bg-stone-950/80 border border-stone-800 rounded-xl p-4">
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-[11px] text-amber-500 font-bold uppercase tracking-widest">${formatName(id)}</span>
+              <span class="text-[10px] font-mono bg-stone-900 border border-stone-800 px-2 py-1 rounded text-stone-300">
+                ${Math.ceil(usesUsed)} Usos
+              </span>
+            </div>
+            <div class="flex items-end justify-between">
+              <div>
+                <span class="block text-[9px] text-stone-500 uppercase tracking-widest mb-1">Total Craftar</span>
+                <span class="text-2xl font-black font-mono text-white">${integerItemsNeeded}</span>
+              </div>
+              <div class="text-right">
+                <span class="block text-[9px] text-stone-500 uppercase tracking-widest mb-1">Desgaste</span>
+                <span class="text-sm font-black font-mono text-amber-400">${percentage}%</span>
+              </div>
+            </div>
+            <div class="w-full h-1 bg-stone-900 rounded-full mt-3 overflow-hidden">
+              <div class="h-full bg-amber-500 transition-all duration-500" style="width: ${percentage}%"></div>
+            </div>
+          </div>
+        `);
+      }
+    }
+
+    // Listeners
+    elTargetItem.addEventListener('change', updateUI);
+    elTargetAmount.addEventListener('input', updateUI);
+    elCraftArcane.addEventListener('change', updateUI);
+    elTemplateMethod.addEventListener('change', updateUI);
+    
+    elSliderAncestral.addEventListener('input', (e) => { elValAncestral.innerText = e.target.value + '%'; updateUI(); });
+    elSliderCrushing.addEventListener('input', (e) => { elValCrushing.innerText = e.target.value + '%'; updateUI(); });
+
+    updateUI();
+  </script>
 </body>
 </html>
