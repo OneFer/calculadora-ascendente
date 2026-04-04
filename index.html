@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculadora Tenebris - V9 (UX Árvore de Produção)</title>
+  <title>Calculadora Tenebris - V17 (Deep Malum Tier)</title>
   
   <!-- Fontes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -93,7 +93,7 @@
           <i data-lucide="cpu" class="text-purple-500 w-6 h-6"></i>
           <h1 class="text-2xl font-black tracking-tighter text-white uppercase">Tenebris <span class="text-purple-500">Logistics</span></h1>
         </div>
-        <p class="text-sm font-semibold tracking-widest text-stone-400 uppercase">Módulo de Processamento (V9 - Interface Otimizada)</p>
+        <p class="text-sm font-semibold tracking-widest text-stone-400 uppercase">Módulo de Processamento (V17 - Deep Malum Tier)</p>
       </div>
       
       <!-- Status do Sistema -->
@@ -154,7 +154,15 @@
                 <option value="tenebris:mithril_block">Mithril Block</option>
                 <option value="tenebris:mithril_rune">Mithril Rune</option>
               </optgroup>
+              <optgroup label="Nível: Adamantite">
+                <option value="tenebris:adamantite_upgrade_smithing_template">Adamantite Smithing Template</option>
+                <option value="tenebris:adamantite_sheet">Adamantite Sheet</option>
+                <option value="tenebris:adamantite_rune">Adamantite Rune</option>
+                <option value="tenebris:adamantite_ingot">Adamantite Ingot</option>
+                <option value="tenebris:adamantite_block">Adamantite Block</option>
+              </optgroup>
               <optgroup label="Nível: Harmonic & Golden">
+                <option value="tenebris:harmonic_crystalheart">Harmonic Crystalheart</option>
                 <option value="tenebris:harmonic_ingot_sheet">Harmonic Ingot Sheet</option>
                 <option value="tenebris:harmonic_ingot">Harmonic Ingot</option>
                 <option value="tenebris:golden_ascendance_sheet">Golden Ascendance Sheet</option>
@@ -303,18 +311,25 @@
       // --- COMPONENTES MALUM ---
       "malum:void_tablet": { yield: 1, ingredients: [ { item: "malum:void_salts", amount: 8 }, { item: "malum:null_slate", amount: 8 }, { item: "malum:eldritch_spirit", amount: 4 }, { item: "malum:tainted_rock_tablet", amount: 1 } ] },
       "malum:tainted_rock_tablet": { yield: 1, ingredients: [ { item: "malum:aerial_spirit", amount: 8 }, { item: "malum:aqueous_spirit", amount: 8 }, { item: "malum:earthen_spirit", amount: 8 }, { item: "malum:infernal_spirit", amount: 8 }, { item: "malum:eldritch_spirit", amount: 2 } ] },
+      "malum:block_of_soul_stained_steel": { yield: 1, ingredients: [ { item: "malum:soul_stained_steel_ingot", amount: 9 } ] },
       "malum:soul_stained_steel_plating": { yield: 1, ingredients: [ { item: "malum:soul_stained_steel_nugget", amount: 4 }, { item: "malum:soul_stained_steel_ingot", amount: 1 } ] },
       "malum:soul_stained_steel_nugget": { yield: 9, ingredients: [ { item: "malum:soul_stained_steel_ingot", amount: 1 } ] },
       "malum:soul_stained_steel_ingot": { yield: 1, ingredients: [ { item: "malum:wicked_spirit", amount: 3 }, { item: "malum:earthen_spirit", amount: 1 }, { item: "malum:arcane_spirit", amount: 1 }, { item: "minecraft:iron_ingot", amount: 1 }, { item: "malum:processed_soulstone", amount: 4 } ] },
+
+      // --- NOVOS COMPONENTES MALUM / DEEP TIER ---
+      "malum:hallowed_gold_ingot": { yield: 1, ingredients: [ { item: "minecraft:gold_ingot", amount: 1 }, { item: "minecraft:quartz", amount: 4 }, { item: "malum:sacred_spirit", amount: 2 }, { item: "malum:arcane_spirit", amount: 1 } ] },
+      "malum:fused_consciousness": { yield: 1, ingredients: [ { item: "minecraft:iron_block", amount: 1 }, { item: "malum:sacred_spirit", amount: 4 }, { item: "malum:wicked_spirit", amount: 4 }, { item: "malum:arcane_spirit", amount: 4 }, { item: "malum:eldritch_spirit", amount: 4 }, { item: "malum:aerial_spirit", amount: 4 }, { item: "malum:aqueous_spirit", amount: 4 }, { item: "malum:earthen_spirit", amount: 4 }, { item: "malum:infernal_spirit", amount: 4 } ] },
+      "tenebris:corrupted_fragment": { yield: 1, ingredients: [ { item: "tenebris:mithril_ingot", amount: 4 }, { item: "minecraft:netherite_scrap", amount: 4 }, { item: "tenebris:arcane_pebble", amount: 1 } ] },
 
       // --- VANILLA COMPONENTES ---
       "minecraft:gold_block": { yield: 1, ingredients: [{ item: "minecraft:gold_ingot", amount: 9 }] },
       "minecraft:netherite_ingot": { yield: 1, ingredients: [{ item: "minecraft:netherite_scrap", amount: 4 }, { item: "minecraft:gold_ingot", amount: 4 }] },
 
-      // --- FLUIDOS ---
+      // --- FLUIDOS (Adaptado conforme regra do mod Tenebris) ---
       "fluid:harmonic_essence": { yield: 1000, ingredients: [{ item: "tenebris:powdered_arcane_ingot", amount: 8 }] },
       "fluid:pure_vitae": { yield: 1000, ingredients: [{ item: "tenebris:powdered_arcane_ingot", amount: 8 }] },
       "fluid:cursed_vitae": { yield: 1000, ingredients: [{ item: "tenebris:powdered_arcane_ingot", amount: 8 }] },
+      // fluid:arcane_essence foi removido intencionalmente para não poluir os materiais básicos.
 
       // --- BLOCOS E PEPITAS GERAIS ---
       "tenebris:arcane_block": { yield: 1, ingredients: [{ item: "tenebris:arcane_ingot", amount: 9 }] },
@@ -322,19 +337,35 @@
       "tenebris:ancestral_block": { yield: 1, ingredients: [{ item: "tenebris:ancestral_ingot", amount: 9 }] },
       "tenebris:ancestral_nugget": { yield: 9, ingredients: [{ item: "tenebris:ancestral_ingot", amount: 1 }] },
       "tenebris:ascendant_nugget": { yield: 9, ingredients: [{ item: "tenebris:ascendant_ingot", amount: 1 }] },
-      
       "tenebris:esoteric_block": { yield: 1, ingredients: [{ item: "tenebris:esoteric_ingot", amount: 9 }] },
       "tenebris:esoteric_nugget": { yield: 9, ingredients: [{ item: "tenebris:esoteric_ingot", amount: 1 }] },
-      
       "tenebris:mithril_block": { yield: 1, ingredients: [{ item: "tenebris:mithril_ingot", amount: 9 }] },
       "tenebris:mithril_nugget": { yield: 9, ingredients: [{ item: "tenebris:mithril_ingot", amount: 1 }] },
+      "tenebris:adamantite_nugget": { yield: 9, ingredients: [{ item: "tenebris:adamantite_ingot", amount: 1 }] },
 
-      // --- RUNAS ---
+      // --- RUNAS & TABLETS ---
+      "tenebris:arcane_tree_planks": { yield: 4, ingredients: [{ item: "tenebris:arcane_tree_log", amount: 1 }] },
+      "tenebris:arcane_tablet": { yield: 2, ingredients: [{ item: "tenebris:arcane_tree_log", amount: 2 }, { item: "malum:processed_soulstone", amount: 8 }, { item: "tenebris:arcane_tree_planks", amount: 4 }, { item: "malum:hex_ash", amount: 2 }] },
       "tenebris:arcane_rune": { yield: 1, ingredients: [{ item: "tenebris:arcane_nugget", amount: 6 }, { item: "malum:tainted_rock_tablet", amount: 1 }] },
       "tenebris:ancestral_rune": { yield: 1, ingredients: [{ item: "tenebris:ancestral_nugget", amount: 6 }, { item: "malum:tainted_rock_tablet", amount: 1 }] },
       "tenebris:ascendant_rune": { yield: 1, ingredients: [{ item: "tenebris:ascendant_nugget", amount: 6 }, { item: "malum:void_tablet", amount: 1 }] },
-      "tenebris:esoteric_rune": { yield: 1, ingredients: [{ item: "tenebris:esoteric_nugget", amount: 6 }, { item: "malum:void_tablet", amount: 1 }] },
-      "tenebris:mithril_rune": { yield: 1, ingredients: [{ item: "tenebris:mithril_nugget", amount: 6 }, { item: "malum:void_tablet", amount: 1 }] },
+      "tenebris:esoteric_rune": { yield: 1, ingredients: [{ item: "tenebris:esoteric_nugget", amount: 6 }, { item: "tenebris:arcane_tablet", amount: 1 }] },
+      "tenebris:mithril_rune": { yield: 1, ingredients: [{ item: "tenebris:mithril_nugget", amount: 6 }, { item: "tenebris:arcane_tablet", amount: 1 }] },
+      "tenebris:adamantite_rune": { yield: 1, ingredients: [{ item: "tenebris:adamantite_nugget", amount: 6 }, { item: "tenebris:arcane_tablet", amount: 1 }] },
+
+      // --- FERRAMENTAS E EQUIPAMENTOS (Custo de Reposição) ---
+      "tenebris:ascendant_paper": { yield: 1, ingredients: [{ item: "tenebris:powdered_ascendant_ingot", amount: 1 }, { item: "create:sand_paper", amount: 1 }] },
+      "tenebris:thermal_monitor_mechanism": { yield: 1, ingredients: [{ item: "tenebris:golden_ascendance_sheet", amount: 1 }, { item: "create:brass_ingot", amount: 5 }, { item: "minecraft:obsidian", amount: 5 }, { item: "minecraft:redstone", amount: 5 }] },
+      "tenebris:oblivion_core": { yield: 1, ingredients: [{ item: "malum:fused_consciousness", amount: 1 }, { item: "malum:processed_soulstone", amount: 2 }, { item: "tenebris:powdered_esoteric_ingot", amount: 2 }, { item: "malum:hallowed_gold_ingot", amount: 4 }, { item: "malum:aerial_spirit", amount: 16 }, { item: "malum:aqueous_spirit", amount: 16 }, { item: "malum:sacred_spirit", amount: 16 }, { item: "malum:eldritch_spirit", amount: 16 }] },
+      "tenebris:ethereal_husk": { yield: 2, ingredients: [{ item: "tenebris:mithril_ingot", amount: 1 }, { item: "tenebris:oblivion_core", amount: 1 }, { item: "tenebris:thermal_monitor_mechanism", amount: 4, type: "durability" }] },
+      "tenebris:ethereal_core": { yield: 1, ingredients: [{ item: "tenebris:ethereal_husk", amount: 1 }, { item: "tenebris:arcane_pebble", amount: 1 }, { item: "fluid:harmonic_essence", amount: 500 }] },
+      "tenebris:charged_core": { yield: 1, ingredients: [{ item: "tenebris:ethereal_core", amount: 1 }] },
+      "tenebris:golden_brilliance": { yield: 1, ingredients: [{ item: "tenebris:golden_ascendance_sheet", amount: 1 }, { item: "create:experience_block", amount: 4 }] },
+      "tenebris:luminous_core": { yield: 1, ingredients: [{ item: "tenebris:oblivion_core", amount: 1 }, { item: "tenebris:adamantite_shard", amount: 1 }, { item: "tenebris:golden_brilliance", amount: 1 }, { item: "tenebris:harmonic_ingot", amount: 1 }, { item: "malum:aerial_spirit", amount: 16 }, { item: "malum:aqueous_spirit", amount: 16 }, { item: "malum:sacred_spirit", amount: 16 }, { item: "malum:arcane_spirit", amount: 16 }] },
+      "tenebris:ethereal_catalyst": { yield: 1, ingredients: [{ item: "tenebris:mithril_sheet", amount: 1 }, { item: "tenebris:adamantite_shard", amount: 3 }, { item: "tenebris:arcane_pebble", amount: 3 }, { item: "tenebris:mithril_nugget", amount: 3 }] },
+      "tenebris:ethereal_conduit": { yield: 1, ingredients: [{ item: "tenebris:ethereal_catalyst", amount: 1 }] },
+      "tenebris:adamantite_cell": { yield: 1, ingredients: [{ item: "tenebris:adamantite_shard", amount: 4 }, { item: "tenebris:ethereal_conduit", amount: 1 }, { item: "irons_spellbooks:mana_upgrade_orb", amount: 4 }] },
+      "tenebris:sentient_obelisk": { yield: 1, ingredients: [{ item: "tenebris:charged_core", amount: 1 }, { item: "tenebris:adamantite_shard", amount: 1 }, { item: "tenebris:adamantite_cell", amount: 1 }, { item: "tenebris:harmonic_ingot", amount: 1 }, { item: "tenebris:luminous_core", amount: 1 }] },
 
       // --- NÍVEL 1: ARCANE ---
       "tenebris:arcane_ingot": { yield: 1, ingredients: [ { item: "minecraft:iron_ingot", amount: 1 }, { item: "tenebris:thermal_monitor_mechanism", amount: 1, type: "durability" } ] },
@@ -384,6 +415,74 @@
       "tenebris:mithril_upgrade_smithing_template_hard": { yield: 1, ingredients: [ { item: "tenebris:esoteric_upgrade_smithing_template", amount: 1 }, { item: "tenebris:mithril_block", amount: 2 }, { item: "tenebris:mithril_ingot", amount: 4 }, { item: "tenebris:mithril_rune", amount: 4 } ] },
       "tenebris:mithril_upgrade_smithing_template_easy": { yield: 1, ingredients: [ { item: "tenebris:mithril_block", amount: 1 }, { item: "tenebris:mithril_sheet", amount: 4 }, { item: "tenebris:esoteric_ingot", amount: 4 }, { item: "tenebris:mithril_rune", amount: 4 } ] },
 
+      // --- NÍVEL 6: ADAMANTITE ---
+      "tenebris:adamantite_paste": { 
+        yield: 1, 
+        ingredients: [ 
+          { item: "tenebris:powdered_mithril_ingot", amount: 1 }, 
+          { item: "fluid:harmonic_essence", amount: 500 }
+        ] 
+      },
+      "tenebris:compacted_adamantite": { 
+        yield: 4, 
+        ingredients: [ { item: "tenebris:adamantite_paste", amount: 1 } ] 
+      },
+      "tenebris:adamantite_crystal": { 
+        yield: 1, 
+        ingredients: [ { item: "tenebris:compacted_adamantite", amount: 4 } ] 
+      },
+      "tenebris:adamantite_shard": { 
+        yield: 4, 
+        ingredients: [ { item: "tenebris:adamantite_crystal", amount: 1 } ] 
+      },
+      "tenebris:powdered_adamantite_ingot": { yield: 2, returnItem: "tenebris:adamantite_ingot", ingredients: [{ item: "tenebris:adamantite_ingot", amount: 1 }] },
+      "tenebris:adamantite_sheet": { yield: 1, ingredients: [{ item: "tenebris:powdered_adamantite_ingot", amount: 1 }] },
+      "tenebris:adamantite_ingot": { 
+        yield: 1, 
+        ingredients: [ 
+          { item: "tenebris:adamantite_shard", amount: 4 },
+          { item: "tenebris:sentient_obelisk", amount: 16, type: "durability" }
+        ] 
+      },
+      "tenebris:adamantite_block": { 
+        yield: 1, 
+        ingredients: [ 
+          { item: "malum:block_of_cthonic_gold", amount: 4 },
+          { item: "tenebris:adamantite_ingot", amount: 9 },
+          { item: "tenebris:adamantite_shard", amount: 12 }
+        ] 
+      },
+
+      // --- TEMPLATES & ITENS COMPLEXOS (ADAMANTITE) ---
+      "tenebris:harmonic_crystalheart": { 
+        yield: 1, 
+        ingredients: [ 
+          { item: "tenebris:harmonic_ingot", amount: 10 },
+          { item: "tenebris:adamantite_shard", amount: 7 },
+          { item: "tenebris:luminous_core", amount: 4 }
+        ] 
+      },
+      "tenebris:adamantite_upgrade_smithing_template_hard": { 
+        yield: 1, 
+        ingredients: [ 
+          { item: "tenebris:mithril_upgrade_smithing_template", amount: 1 }, 
+          { item: "tenebris:adamantite_sheet", amount: 6 }, 
+          { item: "tenebris:adamantite_ingot", amount: 8 }, 
+          { item: "tenebris:adamantite_shard", amount: 5 },
+          { item: "tenebris:adamantite_rune", amount: 5 },
+          { item: "tenebris:harmonic_crystalheart", amount: 2 }
+        ] 
+      },
+      "tenebris:adamantite_upgrade_smithing_template_easy": { 
+        yield: 1, 
+        ingredients: [ 
+          { item: "tenebris:adamantite_block", amount: 1 }, 
+          { item: "tenebris:adamantite_sheet", amount: 4 }, 
+          { item: "tenebris:mithril_ingot", amount: 4 }, 
+          { item: "tenebris:adamantite_rune", amount: 4 } 
+        ] 
+      },
+
       // --- NÍVEL EXTRA ---
       "tenebris:golden_ascendance_sheet": { yield: 1, ingredients: [{ item: "tenebris:golden_ascendance_ingot", amount: 1 }] },
       "tenebris:golden_ascendance_ingot": { yield: 9, ingredients: [{ item: "tenebris:golden_ascendance_block", amount: 1 }] },
@@ -413,18 +512,14 @@
 
         let finalId = originalItemId.replace('_hard', '').replace('_easy', '');
         
-        // 1. Tentar pegar as sobras primeiro! (Economia Inteligente)
         let available = leftovers[finalId] || 0;
         let takenFromLeftovers = Math.min(amountNeeded, available);
         leftovers[finalId] -= takenFromLeftovers; 
         
         let remainingNeeded = amountNeeded - takenFromLeftovers;
-
         let node = { id: finalId, amount: amountNeeded, crafted: 0, fromLeftovers: takenFromLeftovers, children: [], isBase: false, isTool: false };
 
-        if (remainingNeeded <= 0) {
-           return node;
-        }
+        if (remainingNeeded <= 0) return node;
 
         if (originalItemId === "tenebris:arcane_ingot" && !craftArcaneEnabled) {
           addObj(baseMaterials, originalItemId, remainingNeeded);
@@ -440,7 +535,6 @@
 
         if (recipes[itemId]) {
           const recipe = recipes[itemId];
-
           let expectedYield = recipe.yield || 1;
 
           if (recipe.isAncestral) {
@@ -471,7 +565,6 @@
              if (ingAmount > 0) {
                  if (ing.type === "durability") {
                     addObj(toolUsages, ing.item, ingAmount);
-                    // Ferramentas são nós folha especiais na árvore
                     node.children.push({ id: ing.item, amount: ingAmount, crafted: 0, fromLeftovers: 0, children: [], isBase: false, isTool: true });
                  } else {
                     let childNode = resolveRecipe(ing.item, ingAmount);
@@ -480,7 +573,6 @@
              }
           });
         } else {
-          // Chegou na base
           addObj(baseMaterials, finalId, remainingNeeded);
           node.isBase = true;
           node.crafted = remainingNeeded;
@@ -489,7 +581,46 @@
         return node;
       }
 
-      const craftingTree = resolveRecipe(targetId, targetAmount);
+      let craftingTree = resolveRecipe(targetId, targetAmount);
+
+      // --- PÓS-PROCESSAMENTO: CUSTO DE REPOSIÇÃO DE FERRAMENTAS ---
+      let toolTrees = [];
+      let pending = true;
+      let processedTools = {};
+
+      while(pending) {
+        pending = false;
+        for (const [id, uses] of Object.entries(toolUsages)) {
+          const maxDura = TOOLS_MAX_DURABILITY[id] || 1;
+          const totalItemsNeeded = Math.ceil(uses / maxDura);
+          const alreadyCrafted = processedTools[id] || 0;
+          
+          if (totalItemsNeeded > alreadyCrafted) {
+            const toCraft = totalItemsNeeded - alreadyCrafted;
+            processedTools[id] = totalItemsNeeded;
+            
+            let toolNode = resolveRecipe(id, toCraft);
+            if (toolNode) toolTrees.push(toolNode);
+            
+            pending = true; // Se a ferramenta custar outra ferramenta, o loop reavalia!
+          }
+        }
+      }
+
+      // Agrupa Ferramentas na Árvore Principal
+      if (toolTrees.length > 0 && craftingTree) {
+        craftingTree = {
+          id: "logistics_root",
+          customName: "Operação Logística Completa",
+          amount: 1,
+          isRoot: true,
+          children: [
+            { ...craftingTree, customName: "Alvo: " + formatName(targetId) },
+            { id: "tool_costs", customName: "Reposição de Ferramentas / Equipamentos", amount: 1, children: toolTrees }
+          ]
+        };
+      }
+
       return { baseMaterials, toolUsages, craftingTree, leftovers };
     }
 
@@ -499,29 +630,26 @@
     function formatName(id) {
       let parts = id.split(':');
       let nameStr = parts.length > 1 ? parts[1] : parts[0];
-      return nameStr.split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+      return nameStr.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
-    // Função Recursiva para desenhar o HTML das Pastas (Árvore) - AGORA VEM FECHADA SEM O ATRIBUTO "open"
     function renderTreeHTML(node) {
       if (!node) return '';
       
-      const name = formatName(node.id);
+      const name = node.customName || formatName(node.id);
       const amount = parseFloat(node.amount.toFixed(2));
       
       const leftoversBadge = node.fromLeftovers > 0 
         ? `<span class="text-[9px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded ml-2 border border-blue-800/50 flex-shrink-0">Reaproveitou ${parseFloat(node.fromLeftovers.toFixed(2))} da sobra</span>` 
         : '';
       
-      if (node.isBase || node.isTool || node.crafted === 0 || !node.children || node.children.length === 0) {
+      if (node.isBase || node.isTool || node.crafted === 0 || (!node.children || node.children.length === 0)) {
         let icon = node.isTool ? 'hammer' : (node.crafted === 0 ? 'check-circle' : 'corner-down-right');
         let colorClass = node.isTool ? 'text-amber-500' : (node.crafted === 0 ? 'text-blue-500' : 'text-stone-500');
         return `
           <div class="flex items-center gap-2 py-1.5 pl-2 hover:bg-stone-900/50 rounded transition-colors flex-wrap">
             <i data-lucide="${icon}" class="w-3 h-3 flex-shrink-0 ${colorClass}"></i>
-            <span class="font-mono font-bold text-white text-xs">${amount}x</span>
+            <span class="font-mono font-bold text-white text-xs">${node.isRoot ? '' : amount + 'x'}</span>
             <span class="text-xs text-stone-400 truncate">${name}</span>
             ${leftoversBadge}
           </div>
@@ -531,13 +659,13 @@
       let childrenHTML = node.children.map(child => renderTreeHTML(child)).join('');
       
       return `
-        <details class="group relative"> <!-- Removido atributo 'open' para nascer fechado -->
+        <details class="group relative" ${node.isRoot ? 'open' : ''}>
           <summary class="flex items-center gap-2 cursor-pointer py-1.5 px-2 hover:bg-stone-900/50 rounded transition-colors select-none flex-wrap">
             <i data-lucide="chevron-right" class="chevron-icon w-3 h-3 flex-shrink-0 text-purple-500 transition-transform duration-200"></i>
-            <span class="font-mono font-black text-purple-400 text-xs">${amount}x</span>
+            <span class="font-mono font-black text-purple-400 text-xs">${node.isRoot ? '' : amount + 'x'}</span>
             <span class="text-xs font-semibold text-stone-200 truncate">${name}</span>
             ${leftoversBadge}
-            <span class="text-[9px] uppercase tracking-widest text-stone-600 ml-2 hidden sm:inline">(Pasta)</span>
+            <span class="text-[9px] uppercase tracking-widest text-stone-600 ml-2 hidden sm:inline">${node.isRoot ? '' : '(Pasta)'}</span>
           </summary>
           <div class="relative pl-6 pb-1">
             <div class="tree-line"></div>
@@ -547,7 +675,6 @@
       `;
     }
 
-    // Função para Expandir/Recolher todas as pastas
     function toggleAllFolders(forceOpen) {
       const detailsElements = document.querySelectorAll('#treeContainer details');
       detailsElements.forEach(details => {
